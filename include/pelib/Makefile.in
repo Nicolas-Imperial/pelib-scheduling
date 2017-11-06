@@ -1,0 +1,44 @@
+# Copyright 2015 Nicolas Melot
+#
+# This file is part of pelib.
+#
+# pelib is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# pelib is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with pelib. If not, see <http://www.gnu.org/licenses/>.
+#
+
+
+## All files to include in a distribution package
+attach = Task.hpp \
+exprtk.hpp \
+DeadlineCalculator.hpp DeadlineConstant.hpp DeadlineFormula.hpp \
+Taskgraph.hpp \
+TaskgraphParser.hpp TaskgraphOutput.hpp \
+GraphMLParser.hpp GraphMLOutput.hpp \
+GraphML.hpp \
+Core.hpp \
+DummyCore.hpp \
+Platform.hpp \
+PlatformParser.hpp PlatformOutput.hpp \
+AbstractLink.hpp AllotedLink.hpp Buffer.hpp Memory.hpp ExecTask.hpp TaskSync.hpp \
+Schedule.hpp \
+ScheduleParser.hpp ScheduleOutput.hpp \
+XMLScheduleParser.hpp XMLScheduleOutput.hpp \
+XMLSchedule.hpp \
+TetrisSchedule.hpp \
+TetrisScheduleOutput.hpp \
+Scheduler.hpp \
+scheduler.h \
+generate.hpp pelib_exprtk.hpp 
+
+## Further directories to follow
+subdirs = 
