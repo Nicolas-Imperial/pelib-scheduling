@@ -31,7 +31,7 @@ namespace pelib
 	{
 		public:
 			/** Constructor. Takes the producer and consumer tasks at both ends of the link **/
-			AbstractLink(const Task &producer, const Task &consumer, const std::string &producerName, const std::string &consumerName, size_t producer_rate = 0, size_t consumer_rate = 0);
+			AbstractLink(const Task &producer, const Task &consumer, const std::string &producerName, const std::string &consumerName, const std::string &type, const std::string &header, size_t producer_rate = 0, size_t consumer_rate = 0);
 			AbstractLink(const AbstractLink& link);
 			virtual ~AbstractLink();
 

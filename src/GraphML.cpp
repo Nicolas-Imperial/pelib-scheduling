@@ -67,8 +67,9 @@ typedef struct reader_args reader_args_t;
 const string GraphML::producerName = "producer_name";
 const string GraphML::consumerName = "consumer_name";
 const string GraphML::type = "type";
-const string GraphML::producer_rate = "producer_rate";
-const string GraphML::consumer_rate = "consumer_rate";
+const string GraphML::header = "header";
+const string GraphML::producer_rate = "produce";
+const string GraphML::consumer_rate = "consume";
 
 static void*
 thread_reader(void* aux)
@@ -202,6 +203,10 @@ GraphML::dump(ostream& os, const Taskgraph *data, const Platform *arch) const
 		if(i->getDataType().compare(string()) != 0)
 		{
 			SETEAS(graph, type.c_str(), counter, i->getDataType().c_str());
+		}
+		if(i->getHeader().compare(string()) != 0)
+		{
+			SETEAS(graph, type.c_str(), counter, i->getHeader().c_str());
 		}
 		if(i->getProducerRate() > 0)
 		{
@@ -366,7 +371,8 @@ GraphML::parse(istream &is) const
 		Task consumer(VAS(the_graph, "name", consumer_id));
 		string producerName = string(EAS(the_graph, GraphML::producerName.c_str(), i));
 		string consumerName = string(EAS(the_graph, GraphML::consumerName.c_str(), i));
-		string type("");
+		string type = string(EAS(the_graph, GraphML::type.c_str(), i));
+		string header = string(EAS(the_graph, GraphML::header.c_str(), i));
 		if(igraph_cattribute_has_attr(the_graph, IGRAPH_ATTRIBUTE_EDGE, GraphML::type.c_str()))
 		{
 			type = string(EAS(the_graph, GraphML::type.c_str(), i));
@@ -382,7 +388,7 @@ GraphML::parse(istream &is) const
 		}
 
 		Buffer nullBuffer = Buffer::nullBuffer();
-		AbstractLink link(*tasks.find(producer), *tasks.find(consumer), producerName, consumerName, producer_rate, consumer_rate);
+		AbstractLink link(*tasks.find(producer), *tasks.find(consumer), producerName, consumerName, type, header, producer_rate, consumer_rate);
 		links.insert(link);
 
 		const AbstractLink &link_ref = *links.find(link);

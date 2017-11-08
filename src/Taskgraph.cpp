@@ -83,7 +83,7 @@ namespace pelib
 			const Task &producer = *this->tasks.find(*i->getProducer());
 			const Task &consumer = *this->tasks.find(*i->getConsumer());
 
-			AbstractLink link(producer, consumer, i->getProducerName(), i->getConsumerName(), i->getProducerRate(), i->getConsumerRate());
+			AbstractLink link(producer, consumer, i->getProducerName(), i->getConsumerName(), i->getDataType(), i->getHeader(), i->getProducerRate(), i->getConsumerRate());
 			this->links.insert(link);
 		}
 
@@ -105,7 +105,7 @@ namespace pelib
 			{
 				const Task *producer = (*j)->getProducer();
 				const Task *consumer = (*j)->getConsumer();
-				AbstractLink newAbstractLink(*this->tasks.find(*producer), *this->tasks.find(*consumer), (*j)->getProducerName(), (*j)->getConsumerName(), (*j)->getProducerRate(), (*j)->getConsumerRate());
+				AbstractLink newAbstractLink(*this->tasks.find(*producer), *this->tasks.find(*consumer), (*j)->getProducerName(), (*j)->getConsumerName(), (*j)->getDataType(), (*j)->getHeader(), (*j)->getProducerRate(), (*j)->getConsumerRate());
 				const AbstractLink &link = *this->links.find(newAbstractLink);
 				t.getProducers().insert(&link);
 			}
@@ -115,7 +115,7 @@ namespace pelib
 			{
 				const Task *producer = (*j)->getProducer();
 				const Task *consumer = (*j)->getConsumer();
-				AbstractLink newAbstractLink(*this->tasks.find(*producer), *this->tasks.find(*consumer), (*j)->getProducerName(), (*j)->getConsumerName(), (*j)->getProducerRate(), (*j)->getConsumerRate());
+				AbstractLink newAbstractLink(*this->tasks.find(*producer), *this->tasks.find(*consumer), (*j)->getProducerName(), (*j)->getConsumerName(), (*j)->getDataType(), (*j)->getHeader(), (*j)->getProducerRate(), (*j)->getConsumerRate());
 				const AbstractLink &link = *this->links.find(newAbstractLink);
 				t.getConsumers().insert(&link);
 			}
@@ -196,7 +196,7 @@ namespace pelib
 						set<Task>::const_iterator from = this->getTasks().begin(), to = this->getTasks().begin();
 						std::advance(from, (size_t)i->first - 1);
 						std::advance(to, (size_t)j->first - 1);
-						this->links.insert(AbstractLink(*from, *to, from->getName(), to->getName()));
+						this->links.insert(AbstractLink(*from, *to, from->getName(), to->getName(), string(), string()));
 					}
 				}
 			}

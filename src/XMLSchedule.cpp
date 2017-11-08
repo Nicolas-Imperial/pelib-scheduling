@@ -410,7 +410,7 @@ XMLSchedule::parse(istream &is, const Taskgraph &tg, const Platform &pt) const
 					throw PelibException("Missing either reference to producer or consumer task in link");
 				}
 
-				AbstractLink linkKey(*producer, *consumer, producer_name, consumer_name);
+				AbstractLink linkKey(*producer, *consumer, producer_name, consumer_name, string(), string());
 				const set<AbstractLink> &allLinks = tg.getLinks();
 				set<AbstractLink>::const_iterator linkIter = allLinks.find(linkKey);
 				if(linkIter == allLinks.end())

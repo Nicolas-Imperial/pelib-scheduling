@@ -25,7 +25,7 @@
 #include <pelib/Solver.hpp>
 
 #ifndef PELIB_SCHEDULER
-#define PELIB_SCHEDULER
+#define PELIB_SCHEDULER 1
 namespace pelib
 {
 	class Scheduler : public Solver

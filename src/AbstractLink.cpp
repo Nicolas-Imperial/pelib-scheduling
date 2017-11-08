@@ -35,7 +35,7 @@ using namespace std;
 
 namespace pelib
 {
-	AbstractLink::AbstractLink(const Task &producer, const Task &consumer, const std::string &producerName, const std::string &consumerName, size_t producer_rate, size_t consumer_rate) 
+	AbstractLink::AbstractLink(const Task &producer, const Task &consumer, const std::string &producerName, const std::string &consumerName, const string &type, const string &header, size_t producer_rate, size_t consumer_rate) 
 	{
 		this->producerName = producerName;
 		this->consumerName = consumerName;
@@ -43,6 +43,8 @@ namespace pelib
 		this->consumer = (Task*)&consumer;
 		this->producer_rate = producer_rate;
 		this->consumer_rate = consumer_rate;
+		this->dataType = type;
+		this->header = header;
 	}
 
 	AbstractLink::AbstractLink(const AbstractLink& link)

@@ -26,10 +26,6 @@
 #include <pelib/AbstractLink.hpp>
 #include <pelib/Platform.hpp>
 
-extern "C"{
-#include <igraph.h>
-}
-
 #ifndef PELIB_TASKGRAPH
 #define PELIB_TASKGRAPH
 

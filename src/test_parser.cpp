@@ -238,7 +238,7 @@ parse_and_convert_schedule()
 	Schedule schedule("Converted from AMPL", ampl_schedule);
 
 	stringstream reference;
-	XMLSchedule().dump(reference, schedule, tg_graphml, pt);
+	XMLSchedule().dump(reference, schedule);
 
 	if(reference.str().compare(string_schedule_xml) != 0)
 	{

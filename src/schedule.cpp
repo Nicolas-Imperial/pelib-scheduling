@@ -68,7 +68,7 @@ parse(char** arg)
 	args.showDescription = false;
 	pelib_argument_stream_init(&args.lib);
 
-	for(; arg[0] != NULL && string(arg[0]).compare("--") != 0; arg++)
+	for(; arg[0] != NULL; arg++)
 	{
 		if(strcmp(arg[0], "--show-stats") == 0)
 		{
@@ -88,6 +88,7 @@ parse(char** arg)
 			}
 			continue;
 		}
+
 		if(strcmp(arg[0], "--description") == 0)
 		{
 			args.showDescription = true;
@@ -95,7 +96,19 @@ parse(char** arg)
 		}
 
 		// Nothing else, try to parse a library
-		arg += pelib_argument_stream_parse(arg, &args.lib) - 1;
+		size_t offset = pelib_argument_stream_parse(arg, &args.lib);
+		if(offset > 0)
+		{
+			// We need to backtrack as the loop increment will go to next argument
+			arg += offset - 1;
+		}
+		else
+		{
+			// Force switching to next argument to avoid infinite loop
+			fprintf(stderr, "Unknown argument: \"%s\". Perhaps missing curly braces around multiple words arguments? Skipping.\n", *arg);
+			// No increment or backtrack here. Loop increment will get to next argument
+		}
+		
 		continue;
 	}
 
