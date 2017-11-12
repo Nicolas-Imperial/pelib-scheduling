@@ -78,7 +78,7 @@ schedule-parse.cpp
 bincxx_package = 
 
 ## dynamic library packages and their sources
-corepp = pelib-scheduling pelib-platform-ampl_input pelib-platform-ampl_output pelib-taskgraph-graphml pelib-taskgraph-streamit pelib-taskgraph-ampl_input pelib-taskgraph-ampl_output pelib-schedule-xml pelib-schedule-tetris pelib-schedule-ampl_input pelib-schedule-ampl_output pelib-schedule pelib-generate pelib-sequential
+corepp = pelib-scheduling pelib-platform-ampl_input pelib-platform-ampl_output pelib-taskgraph-graphml pelib-taskgraph-streamit pelib-taskgraph-ampl_input pelib-taskgraph-ampl_output pelib-schedule-xml pelib-schedule-tetris pelib-schedule-ampl_input pelib-schedule-ampl_output pelib-schedule pelib-generate pelib-schedule-manual
 sharedcxx_package = $(if $(filter 1,$(CORE++_SHARED)),$(corepp))
 sharedcc_package =
 
@@ -87,16 +87,16 @@ sharedcc_pelib-scheduling_src = $(if $(filter core,$(corepp_extra)),$(core_src))
 shared_pelib-scheduling_export = $(sharedcxx_pelib-scheduling_embed) $(sharedcxx_pelib-scheduling_src) $(sharedcc_pelib-scheduling_src)
 shared_pelib-scheduling_libs = 
 shared_pelib-scheduling_ldflags = -pthread
-shared_pelib-scheduling_cxxflags = -fPIC -std=c++11 $(asan_cflags)
+shared_pelib-scheduling_cxxflags = -fPIC -std=c++11
 shared_pelib-scheduling_deps = 
-shared_pelib-scheduling_pkg = igraph libxml++-2.6 cairomm-1.0 pelib-mip
+shared_pelib-scheduling_pkg = pelib-mip igraph libxml++-2.6 cairomm-1.0
 shared_pelib-scheduling_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-scheduling_pkg_ld = 
 shared_pelib-scheduling_pkg_libs = $(shared_pelib-scheduling_libs)
 shared_pelib-scheduling_pkg_igraph_version = >= 0.7.1
 shared_pelib_pkg_libxml++-2.6_version = >= 2.20
 shared_pelib_pkg_cairomm-1.0_version = >= 1.8.0
-shared_pelib-scheduling_pkg_requires = pelib-mip pelib-core++ 
+shared_pelib-scheduling_pkg_requires = 
 shared_pelib-scheduling_pkg_requires_igraph_version = >= 0.7.1
 shared_pelib-scheduling_pkg_description = General research utility library used in PELAB
 shared_pelib-scheduling_embed = 
@@ -106,7 +106,7 @@ shared_pelib-platform-ampl_input_export = $(sharedcxx_pelib-platform-ampl_input_
 shared_pelib-platform-ampl_input_libs = -lpelib-scheduling
 shared_pelib-platform-ampl_input_ldflags = -L.
 shared_pelib-platform-ampl_input_deps = libpelib-scheduling.so
-shared_pelib-platform-ampl_input_pkg_requires = pelib-scheduling
+shared_pelib-platform-ampl_input_pkg_requires = 
 shared_pelib-platform-ampl_input_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-platform-ampl_input_pkg_ld =
 shared_pelib-platform-ampl_input_pkg_libs =
@@ -119,7 +119,7 @@ shared_pelib-platform-ampl_output_export = $(sharedcxx_pelib-platform-ampl_outpu
 shared_pelib-platform-ampl_output_libs = -lpelib-scheduling
 shared_pelib-platform-ampl_output_ldflags = -L.
 shared_pelib-platform-ampl_output_deps = libpelib-scheduling.so
-shared_pelib-platform-ampl_output_pkg_requires = pelib-scheduling
+shared_pelib-platform-ampl_output_pkg_requires = 
 shared_pelib-platform-ampl_output_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-platform-ampl_output_pkg_ld =
 shared_pelib-platform-ampl_output_pkg_libs =
@@ -132,7 +132,7 @@ shared_pelib-taskgraph-graphml_export = $(sharedcxx_pelib-taskgraph-graphml_embe
 shared_pelib-taskgraph-graphml_libs = -lpelib-scheduling
 shared_pelib-taskgraph-graphml_ldflags = -L.
 shared_pelib-taskgraph-graphml_deps = libpelib-scheduling.so
-shared_pelib-taskgraph-graphml_pkg_requires = pelib-scheduling
+shared_pelib-taskgraph-graphml_pkg_requires = 
 shared_pelib-taskgraph-graphml_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-taskgraph-graphml_pkg_ld =
 shared_pelib-taskgraph-graphml_pkg_libs =
@@ -145,7 +145,7 @@ shared_pelib-taskgraph-streamit_export = $(sharedcxx_pelib-taskgraph-streamit_em
 shared_pelib-taskgraph-streamit_libs = -lpelib-scheduling
 shared_pelib-taskgraph-streamit_ldflags = -L.
 shared_pelib-taskgraph-streamit_deps = libpelib-scheduling.so
-shared_pelib-taskgraph-streamit_pkg = pelib-scheduling
+shared_pelib-taskgraph-streamit_pkg = 
 shared_pelib-taskgraph-streamit_pkg_igraph_version = >= 0.7.1
 shared_pelib-taskgraph-streamit_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-taskgraph-streamit_pkg_ld =
@@ -159,7 +159,7 @@ shared_pelib-taskgraph-ampl_input_export = $(sharedcxx_pelib-taskgraph-ampl_inpu
 shared_pelib-taskgraph-ampl_input_libs = -lpelib-scheduling
 shared_pelib-taskgraph-ampl_input_ldflags = -L.
 shared_pelib-taskgraph-ampl_input_deps = libpelib-scheduling.so
-shared_pelib-taskgraph-ampl_input_pkg_requires = pelib-scheduling pelib-mip
+shared_pelib-taskgraph-ampl_input_pkg_requires = pelib-mip
 shared_pelib-taskgraph-ampl_input_pkg_igraph_version = >= 0.7.1
 shared_pelib-taskgraph-ampl_input_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-taskgraph-ampl_input_pkg_ld =
@@ -173,7 +173,7 @@ shared_pelib-taskgraph-ampl_output_export = $(sharedcxx_pelib-taskgraph-ampl_out
 shared_pelib-taskgraph-ampl_output_libs = -lpelib-scheduling
 shared_pelib-taskgraph-ampl_output_ldflags = -L.
 shared_pelib-taskgraph-ampl_output_deps = libpelib-scheduling.so
-shared_pelib-taskgraph-ampl_output_pkg_requires = pelib-scheduling pelib-mip
+shared_pelib-taskgraph-ampl_output_pkg_requires = pelib-mip
 shared_pelib-taskgraph-ampl_output_pkg_igraph_version = >= 0.7.1
 shared_pelib-taskgraph-ampl_output_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-taskgraph-ampl_output_pkg_ld =
@@ -187,7 +187,7 @@ shared_pelib-schedule-xml_export = $(sharedcxx_pelib-schedule-xml_embed) $(share
 shared_pelib-schedule-xml_libs = -lpelib-scheduling
 shared_pelib-schedule-xml_ldflags = -L.
 shared_pelib-schedule-xml_deps = libpelib-scheduling.so
-shared_pelib-schedule-xml_pkg_requires = pelib-scheduling 
+shared_pelib-schedule-xml_pkg_requires = 
 shared_pelib-schedule-xml_pkg_igraph_version = >= 0.7.1
 shared_pelib-schedule-xml_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-schedule-xml_pkg_ld =
@@ -202,7 +202,7 @@ shared_pelib-schedule-tetris_libs = -lpelib-scheduling
 shared_pelib-schedule-tetris_ldflags = -L.
 shared_pelib-schedule-tetris_deps = libpelib-scheduling.so
 shared_pelib-schedule-tetris_pkg = cairomm-1.0
-shared_pelib-schedule-tetris_pkg_requires = pelib-scheduling
+shared_pelib-schedule-tetris_pkg_requires = 
 shared_pelib-schedule-tetris_pkg_igraph_version = >= 0.7.1
 shared_pelib-schedule-tetris_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-schedule-tetris_pkg_ld =
@@ -216,7 +216,7 @@ shared_pelib-schedule-ampl_input_export = $(sharedcxx_pelib-schedule-ampl_input_
 shared_pelib-schedule-ampl_input_libs = -lpelib-scheduling
 shared_pelib-schedule-ampl_input_ldflags = -L.
 shared_pelib-schedule-ampl_input_deps = libpelib-scheduling.so
-shared_pelib-schedule-ampl_input_pkg = pelib-scheduling 
+shared_pelib-schedule-ampl_input_pkg = 
 shared_pelib-schedule-ampl_input_pkg_igraph_version = >= 0.7.1
 shared_pelib-schedule-ampl_input_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-schedule-ampl_input_pkg_ld =
@@ -230,7 +230,7 @@ shared_pelib-schedule-ampl_output_export = $(sharedcxx_pelib-schedule-ampl_outpu
 shared_pelib-schedule-ampl_output_libs = -lpelib-scheduling
 shared_pelib-schedule-ampl_output_ldflags = -L.
 shared_pelib-schedule-ampl_output_deps = libpelib-scheduling.so
-shared_pelib-schedule-ampl_output_pkg = pelib-scheduling 
+shared_pelib-schedule-ampl_output_pkg = 
 shared_pelib-schedule-ampl_output_pkg_igraph_version = >= 0.7.1
 shared_pelib-schedule-ampl_output_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-schedule-ampl_output_pkg_ld =
@@ -244,7 +244,7 @@ shared_pelib-schedule_export = $(sharedcxx_pelib-schedule_embed) $(sharedcxx_pel
 shared_pelib-schedule_libs = -lpelib-scheduling
 shared_pelib-schedule_ldflags = -L.
 shared_pelib-schedule_deps = libpelib-scheduling.so
-shared_pelib-schedule_pkg = pelib-scheduling 
+shared_pelib-schedule_pkg = 
 shared_pelib-schedule_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-schedule_pkg_ld =
 shared_pelib-schedule_pkg_libs =
@@ -252,17 +252,17 @@ shared_pelib-schedule_cxxflags = -fPIC
 shared_pelib-schedule_pkg_description = Platform parser and output in AMPL input format
 shared_pelib-schedule_embed =
 
-sharedcxx_pelib-sequential_src = sequential.cpp
-shared_pelib-sequential_export = $(sharedcxx_pelib-sequential_embed) $(sharedcxx_pelib-sequential_src)
-shared_pelib-sequential_libs = -lpelib-scheduling
-shared_pelib-sequential_ldflags = -L.
-shared_pelib-sequential_deps = libpelib-scheduling.so
-shared_pelib-sequential_pkg = pelib-scheduling 
-shared_pelib-sequential_pkg_url = http://www.ida.liu.se/~nicme26
-shared_pelib-sequential_pkg_ld =
-shared_pelib-sequential_pkg_libs =
-shared_pelib-sequential_cxxflags = -fPIC
-shared_pelib-sequential_pkg_description = Platform parser and output in AMPL input format
+sharedcxx_pelib-schedule-manual_src = schedule-manual.cpp
+shared_pelib-schedule-manual_export = $(sharedcxx_pelib-schedule-manual_embed) $(sharedcxx_pelib-schedule-manual_src)
+shared_pelib-schedule-manual_libs = -lpelib-scheduling
+shared_pelib-schedule-manual_ldflags = -L.
+shared_pelib-schedule-manual_deps = libpelib-scheduling.so
+shared_pelib-schedule-manual_pkg =  
+shared_pelib-schedule-manual_pkg_url = http://www.ida.liu.se/~nicme26
+shared_pelib-schedule-manual_pkg_ld =
+shared_pelib-schedule-manual_pkg_libs =
+shared_pelib-schedule-manual_cxxflags = -fPIC
+shared_pelib-schedule-manual_pkg_description = Platform parser and output in AMPL input format
 shared_pelib-sequential_embed =
 
 sharedcxx_pelib-generate_src = generate.cpp
@@ -270,7 +270,7 @@ shared_pelib-generate_export = $(sharedcxx_pelib-generate_embed) $(sharedcxx_pel
 shared_pelib-generate_libs = -lpelib-scheduling
 shared_pelib-generate_ldflags = -L.
 shared_pelib-generate_deps = libpelib-scheduling.so
-shared_pelib-generate_pkg = pelib-scheduling 
+shared_pelib-generate_pkg =  
 shared_pelib-generate_pkg_url = http://www.ida.liu.se/~nicme26
 shared_pelib-generate_pkg_ld =
 shared_pelib-generate_pkg_libs =
@@ -289,7 +289,7 @@ testcxx_parser_src = test_parser.cpp
 test_parser_export = $(test_parser_embed) $(testcxx_parser_src) make_algebra.cpp
 test_parser_deps = libpelib-scheduling.so
 test_parser_libs = -lpelib-scheduling
-test_parser_pkg = pelib-scheduling pelib-mip
+test_parser_pkg = pelib-mip
 test_parser_ldflags = -L.
 test_parser_embed = fft_n15_1.graphml fft_n15_1_input.dat fft_n15_1_output.dat p8.dat schedule.xml crown.dat schedule.dat platform.dat
 test_parser_static = 1

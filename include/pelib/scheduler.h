@@ -30,7 +30,7 @@ extern "C" {
 #define PELIB_SCHEDULER_LIB 1
 	const pelib::Schedule* pelib_schedule(const pelib::Taskgraph &tg, const pelib::Platform &pt, size_t argc, char **argv, std::map<const std::string, double> &statistics);
 	std::string pelib_description(size_t argc, char **argv);
-	void pelib_delete(pelib::Schedule *sched);
+	void pelib_delete_schedule(pelib::Schedule *sched);
 #endif
 
 #ifdef __cplusplus

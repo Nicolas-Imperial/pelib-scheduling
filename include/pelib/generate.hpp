@@ -28,7 +28,7 @@ extern "C" {
 #define CROWN_H
 	const pelib::Record* pelib_generate(size_t argc, char **argv);
 	std::string pelib_description(size_t argc, char **argv);
-	void pelib_delete(pelib::Record *sched);
+	void pelib_delete_generate(pelib::Record *sched);
 #endif
 
 #ifdef __cplusplus

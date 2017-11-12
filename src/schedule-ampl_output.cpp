@@ -59,7 +59,7 @@ pelib_parse(std::istream& cin, size_t argc, char **argv, const map<string, Recor
 }
 
 void
-pelib_delete(Record* rec)
+pelib_delete_record(Record* rec)
 {
 	delete rec;
 }

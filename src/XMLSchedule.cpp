@@ -131,6 +131,7 @@ XMLSchedule::dump(ostream& os, const Schedule *sched) const
 		}
 	}
 
+	set<ExecTask> allExecTasks;
 	for(Schedule::Table::const_iterator i = schedule.begin(); i != schedule.end(); i++)
 	{
 		int p = i->first;
@@ -150,6 +151,10 @@ XMLSchedule::dump(ostream& os, const Schedule *sched) const
 			os << "start=\"" << std::fixed << start << "\" ";
 			os << setprecision(old_precision);
 			os << "frequency=\"" << (float)t.getFrequency() << "\"";
+			if(t.getWidth() > 1)
+			{
+				os << " sync=\"" << t.getSync().getInstance() + 1 << "\"";
+			}
 			if(i->first == j->getMasterCore() && j->getWidth() > 1)
 			{
 				os << " role=\"master\"";
@@ -157,6 +162,7 @@ XMLSchedule::dump(ostream& os, const Schedule *sched) const
 			os << "/>" << endl;
 
 			start += t.getTask().runtime(t.getWidth(), t.getFrequency());
+			allExecTasks.insert(*j);
 		}
 		os << " </core>" << endl;
 	}
@@ -202,25 +208,16 @@ XMLSchedule::dump(ostream& os, const Schedule *sched) const
 		os << " </link>" << endl;
 	}
 
-	set<ExecTask> allExecTasks;
-	for(Schedule::Table::const_iterator i = schedule.begin(); i != schedule.end(); i++)
-	{
-		for(set<ExecTask>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
-		{
-			allExecTasks.insert(*j);
-		}
-	}
-
 	for(set<ExecTask>::const_iterator i = allExecTasks.begin(); i != allExecTasks.end(); i++)
 	{
-		if(i->getMemory().getFeature() != Memory::Feature::undefined)
+		if(i->getSync().getFeature() != Memory::Feature::undefined)
 		{
-			os << " <sync " << i->getTask().getName();
-			os << "\" id" << i->getInstance();
-			os << "  <memory core=\"" << i->getMemory().getCore() + 1 << "\" ";
-			os << "feature=\"" << Memory::featureToString(i->getMemory().getFeature()) << "\" ";
-			os << "level=\"" << i->getMemory().getLevel() << "\" ";
-			os << "instance=\"" << i->getInstance() << "\"";
+			os << " <sync ";
+			os << "id=\"" << i->getSync().getInstance() + 1 << "\">" << endl;
+			os << "  <memory core=\"" << i->getSync().getCore() + 1 << "\" ";
+			os << "feature=\"" << Memory::featureToString(i->getSync().getFeature()) << "\" ";
+			os << "level=\"" << i->getSync().getLevel() << "\" ";
+			os << "instance=\"" << i->getInstance() + 1 << "\"";
 			os << "/>" << endl;
 			os << " </sync>" << endl;
 		}
@@ -310,7 +307,7 @@ XMLSchedule::parse(istream &is, const Taskgraph &tg, const Platform &pt) const
 					if(sync.compare(string()) != 0)
 					{
 						map<pair<Task, unsigned int>, unsigned int>::iterator j = task_sync.find(pair<Task, unsigned int>(search, etask.getInstance()));
-						if(j != task_sync.end() && j->second != (unsigned int)atoi(sync.c_str()))
+						if(j != task_sync.end() && j->second != (unsigned int)atoi(sync.c_str()) - 1)
 						{
 							if(j->second != (unsigned int)atoi(sync.c_str()))
 							{
@@ -426,7 +423,7 @@ XMLSchedule::parse(istream &is, const Taskgraph &tg, const Platform &pt) const
 			else if((*piter)->get_name().compare("sync") == 0) //skip indentation characters et cetera
 			{
 				Element *alloc = dynamic_cast<Element*>(*piter);
-				unsigned int instance = atoi(alloc->get_attribute_value("id").c_str());
+				unsigned int instance = atoi(alloc->get_attribute_value("id").c_str()) - 1;
 				Memory::Feature feature = Memory::Feature::undefined;
 				unsigned int core = 0;
 				unsigned int level = 0;

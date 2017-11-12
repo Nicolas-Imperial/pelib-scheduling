@@ -144,7 +144,7 @@ pelib_dump(std::ostream& cout, const std::map<string, Record*> &records, size_t 
 }
 
 void
-pelib_delete(Record *obj)
+pelib_delete_record(Record *obj)
 {
 	delete obj;
 }

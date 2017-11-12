@@ -75,7 +75,7 @@ namespace pelib
 		this->importLinks(links);
 	}
 
-	ExecTask::ExecTask(const ExecTask &task) : task(task.getTask()), sync(task.getMemory())
+	ExecTask::ExecTask(const ExecTask &task) : task(task.getTask()), sync(task.getSync())
 	{
 		this->frequency = task.getFrequency();
 		this->width = task.getWidth();
@@ -210,7 +210,7 @@ namespace pelib
 	}
 
 	const Memory&
-	ExecTask::getMemory() const
+	ExecTask::getSync() const
 	{
 		return this->sync;
 	}

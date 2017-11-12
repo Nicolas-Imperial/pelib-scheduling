@@ -88,7 +88,7 @@ namespace pelib
 					throw PelibException("Schedule contains a task that does not exists in taskgraph");
 				}
 				
-				const ExecTask execTask(*task, this->links, j->getFrequency(), j->getWidth(), j->getStart(), j->getInstance(), j->getMasterCore(), j->getMemory());
+				const ExecTask execTask(*task, this->links, j->getFrequency(), j->getWidth(), j->getStart(), j->getInstance(), j->getMasterCore(), j->getSync());
 				core_schedule.insert(execTask);
 			}
 

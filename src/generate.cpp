@@ -129,10 +129,10 @@ pelib_process(const std::map<string, pelib::Record*> &records, size_t argc, char
 }
 
 void
-pelib_delete(pelib::Record* obj)
+pelib_delete_process(pelib::Record* obj)
 {
 	void *libGenerator = load_lib(library);
-	void (*del)(const Record*) = (void (*)(const Record*))load_function(libGenerator, "pelib_delete");
+	void (*del)(const Record*) = (void (*)(const Record*))load_function(libGenerator, "pelib_delete_generate");
 
 	if(string(typeid(Record).name()).compare(typeid(*obj).name()) == 0)
 	{

@@ -60,6 +60,12 @@ namespace pelib
 			bool
 			operator==(const Memory &mem) const;
 
+			bool
+			operator!=(const Memory &mem) const;
+
+			bool
+			operator<(const Memory &mem) const;
+
 			unsigned int
 			getInstance() const;
 

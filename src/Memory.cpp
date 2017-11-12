@@ -135,6 +135,7 @@ namespace pelib
 		this->feature = Feature::undefined;
 		this->core = 0;
 		this->level = 0;
+		this->instance = 0;
 	}
 
 	Memory
@@ -195,6 +196,16 @@ namespace pelib
 		}
 	
 		free(str);
+		if(((int)memory & 3) == 0)
+		{
+			throw PelibException(string("Missing memory access feature in memory descriptor \"") + mem + string("\""));
+		}
+
+		if(((int)memory & 12) == 0)
+		{
+			throw PelibException(string("Missing memory cost in memory descriptor \"") + mem + string("\""));
+		}
+
 		return (Memory::Feature)memory;
 	}
 
@@ -202,5 +213,38 @@ namespace pelib
 	Memory::operator==(const Memory &mem) const
 	{
 		return this->feature == mem.getFeature() && this->core == mem.getCore() && this->level == mem.getLevel();
+	}
+
+	bool
+	Memory::operator!=(const Memory &mem) const
+	{
+		return !(*this == mem);
+	}
+
+	bool
+	Memory::operator<(const Memory &mem) const
+	{
+		if(this->getInstance() == mem.getInstance())
+		{
+			if(this->getCore() == mem.getCore())
+			{
+				if(this->getFeature() == mem.getFeature())
+				{
+					return this->getLevel() < mem.getLevel();
+				}
+				else
+				{
+					return this->getFeature() < mem.getFeature();
+				}
+			}
+			else
+			{
+				return this->getCore() < mem.getCore();
+			}
+		}
+		else
+		{
+			return this->getInstance() < mem.getInstance();
+		}
 	}
 }

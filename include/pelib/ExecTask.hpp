@@ -88,7 +88,7 @@ namespace pelib
 			allLinks() const;
 
 			const Memory&
-			getMemory() const;
+			getSync() const;
 
 			unsigned int
 			getMasterCore() const;
