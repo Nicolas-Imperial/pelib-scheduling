@@ -45,7 +45,6 @@ namespace pelib
 		this->name = name;
 		this->appName = appName;
 	
-		// Copy taskgraph	
 		this->setSchedule(schedule, links, application, platform);
 	}
 

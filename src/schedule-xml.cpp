@@ -75,6 +75,11 @@ pelib_delete_schedule(Record *obj)
 	delete obj;
 }
 
+void
+pelib_delete_record(Record *obj)
+{
+	delete obj;
+}
 #ifdef __cplusplus
 }
 #endif

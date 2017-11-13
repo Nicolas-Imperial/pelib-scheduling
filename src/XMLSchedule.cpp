@@ -147,7 +147,7 @@ XMLSchedule::dump(ostream& os, const Schedule *sched) const
 			
 			os << "  <task name=\"" << taskid << "\" ";
 			os << setprecision(max_start_precision);
-			os << "instance=\"" << std::fixed << t.getInstance() << "\" ";
+			os << "instance=\"" << std::fixed << t.getInstance() + 1 << "\" ";
 			os << "start=\"" << std::fixed << start << "\" ";
 			os << setprecision(old_precision);
 			os << "frequency=\"" << (float)t.getFrequency() << "\"";
@@ -178,7 +178,7 @@ XMLSchedule::dump(ostream& os, const Schedule *sched) const
 		if(((int)link.getProducerMemory().getFeature() & 3 & (int)Memory::Feature::distributed) == (int)Memory::Feature::distributed)
 		{
 			os << " core=\"" << link.getProducerMemory().getCore() + 1 << "\" ";
-			os << "memory=\"" << Memory::featureToString(link.getProducerMemory().getFeature()) << "\" ";
+			os << "feature=\"" << Memory::featureToString(link.getProducerMemory().getFeature()) << "\" ";
 			os << "level=\"" << link.getProducerMemory().getLevel() << "\"";
 		}
 		os << "/>" << endl;
@@ -189,7 +189,7 @@ XMLSchedule::dump(ostream& os, const Schedule *sched) const
 		if(((int)link.getConsumerMemory().getFeature() & 3 & (int)Memory::Feature::distributed) == (int)Memory::Feature::distributed)
 		{
 			os << " core=\"" << link.getConsumerMemory().getCore() + 1 << "\" ";
-			os << "memory=\"" << Memory::featureToString(link.getConsumerMemory().getFeature()) << "\" ";
+			os << "feature=\"" << Memory::featureToString(link.getConsumerMemory().getFeature()) << "\" ";
 			os << "level=\"" << link.getConsumerMemory().getLevel() << "\"";
 		}
 		os << "/>" << endl;
@@ -208,18 +208,20 @@ XMLSchedule::dump(ostream& os, const Schedule *sched) const
 		os << " </link>" << endl;
 	}
 
+	set<Memory> done;
 	for(set<ExecTask>::const_iterator i = allExecTasks.begin(); i != allExecTasks.end(); i++)
 	{
-		if(i->getSync().getFeature() != Memory::Feature::undefined)
+		if(i->getSync().getFeature() != Memory::Feature::undefined && done.find(i->getSync()) == done.end())
 		{
 			os << " <sync ";
 			os << "id=\"" << i->getSync().getInstance() + 1 << "\">" << endl;
 			os << "  <memory core=\"" << i->getSync().getCore() + 1 << "\" ";
 			os << "feature=\"" << Memory::featureToString(i->getSync().getFeature()) << "\" ";
-			os << "level=\"" << i->getSync().getLevel() << "\" ";
-			os << "instance=\"" << i->getInstance() + 1 << "\"";
+			os << "level=\"" << i->getSync().getLevel() << "\"";
 			os << "/>" << endl;
 			os << " </sync>" << endl;
+
+			done.insert(i->getSync());
 		}
 	}
 		
@@ -280,10 +282,9 @@ XMLSchedule::parse(istream &is, const Taskgraph &tg, const Platform &pt) const
 					}
 
 					string role = task->get_attribute_value("role");
-					unsigned int instance = atoi(task->get_attribute_value("instance").c_str());
+					unsigned int instance = atoi(task->get_attribute_value("instance").c_str()) - 1;
 					if(role.compare(string("master")) == 0)
 					{
-						debug(core_id);
 						master.insert(pair<pair<Task, unsigned int>, unsigned int>(pair<Task, unsigned int>(search, instance), core_id));
 					}
 
@@ -292,7 +293,7 @@ XMLSchedule::parse(istream &is, const Taskgraph &tg, const Platform &pt) const
 						atof(task->get_attribute_value("frequency").c_str()),
 						0,
 						atof(task->get_attribute_value("start").c_str()),
-						atoi(task->get_attribute_value("instance").c_str()),
+						atoi(task->get_attribute_value("instance").c_str()) - 1,
 						0,
 						Memory()
 					);
@@ -318,7 +319,7 @@ XMLSchedule::parse(istream &is, const Taskgraph &tg, const Platform &pt) const
 						}
 						else
 						{
-							task_sync.insert(pair<pair<Task, unsigned int>, unsigned int>(pair<Task, unsigned int>(search, etask.getInstance()), atoi(sync.c_str())));
+							task_sync.insert(pair<pair<Task, unsigned int>, unsigned int>(pair<Task, unsigned int>(search, etask.getInstance()), atoi(sync.c_str()) - 1));
 						}
 					}
 					core_schedule_map.insert(etask);
@@ -349,7 +350,8 @@ XMLSchedule::parse(istream &is, const Taskgraph &tg, const Platform &pt) const
 						string task_name = alloc->get_attribute_value("task");
 						producer_level = atoi(alloc->get_attribute_value("level").c_str());
 						producer_core = atoi(alloc->get_attribute_value("core").c_str()) - 1;
-						producer_type = Memory::stringToFeature(alloc->get_attribute_value("feature").c_str());
+						string producer_type_str(alloc->get_attribute_value("feature").c_str());
+						producer_type = Memory::stringToFeature(producer_type_str);
 
 						set<Task>::iterator i = tg.getTasks().find(Task(task_name));
 						if(i == tg.getTasks().end())
@@ -369,7 +371,7 @@ XMLSchedule::parse(istream &is, const Taskgraph &tg, const Platform &pt) const
 						string task_name = alloc->get_attribute_value("task");
 						consumer_level = atoi(alloc->get_attribute_value("level").c_str());
 						consumer_core = atoi(alloc->get_attribute_value("core").c_str()) - 1;
-						consumer_type = Memory::stringToFeature(alloc->get_attribute_value("memory").c_str());
+						consumer_type = Memory::stringToFeature(alloc->get_attribute_value("feature").c_str());
 
 						set<Task>::iterator i = tg.getTasks().find(Task(task_name));
 						if(i == tg.getTasks().end())
@@ -474,17 +476,18 @@ XMLSchedule::parse(istream &is, const Taskgraph &tg, const Platform &pt) const
 				}
 				
 				map<unsigned int, Memory>::const_iterator sync_search = sync.find(task_sync_search->second);
+				unsigned int width = task_width.find(pair<Task, unsigned int>(j->getTask(), j->getInstance()))->second;
 
 				if(sync_search == sync.end())
 				{
-					if(j->getWidth() <= 1)
+					if(width <= 1)
 					{
 						mem_sync = Memory();
 					}
 					else
 					{
 						stringstream ss;
-						ss << "Parallel task \"" << j->getTask().getName() << "\" instance " << j->getInstance() << " refers to inexistant synchronization data structure" << task_sync_search->second << " on core " << i->first << endl;
+						ss << "Parallel task \"" << j->getTask().getName() << "\" instance " << j->getInstance() << " refers to inexistant synchronization data structure " << task_sync_search->second << " on core " << i->first << endl;
 						throw PelibException(ss.str());
 					}
 				}
@@ -493,7 +496,7 @@ XMLSchedule::parse(istream &is, const Taskgraph &tg, const Platform &pt) const
 					mem_sync = sync_search->second;
 				}
 				
-				ExecTask task(j->getTask(), links, j->getFrequency(), task_width.find(pair<Task, unsigned int>(j->getTask(), j->getInstance()))->second, j->getStart(), j->getInstance(), master_core, mem_sync);
+				ExecTask task(j->getTask(), links, j->getFrequency(), width, j->getStart(), j->getInstance(), master_core, mem_sync);
 				core_schedule.insert(task);
 			}
 			finalSchedule.insert(pair<unsigned int, set<ExecTask>>(i->first, core_schedule));

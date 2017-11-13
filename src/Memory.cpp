@@ -196,12 +196,13 @@ namespace pelib
 		}
 	
 		free(str);
-		if(((int)memory & 3) == 0)
+		// Throw exception if memory misses fields, except if that is a null memory (= 0)
+		if(((int)memory & 3) == 0 && (int)memory != 0)
 		{
 			throw PelibException(string("Missing memory access feature in memory descriptor \"") + mem + string("\""));
 		}
 
-		if(((int)memory & 12) == 0)
+		if(((int)memory & 12) == 0 && (int)memory != 0)
 		{
 			throw PelibException(string("Missing memory cost in memory descriptor \"") + mem + string("\""));
 		}
@@ -212,7 +213,7 @@ namespace pelib
 	bool
 	Memory::operator==(const Memory &mem) const
 	{
-		return this->feature == mem.getFeature() && this->core == mem.getCore() && this->level == mem.getLevel();
+		return this->feature == mem.getFeature() && this->core == mem.getCore() && this->level == mem.getLevel() && this->instance == mem.getInstance();
 	}
 
 	bool

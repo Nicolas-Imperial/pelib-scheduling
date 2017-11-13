@@ -190,7 +190,7 @@ parse_buffer(size_t argc, char **argv, Memory &mem)
 
 	unsigned int i;
 	for(i = 0; i < argc; i++)
-	{       
+	{
 		if(string(argv[i]).compare("--level") == 0)  
 		{
 			i++;
@@ -205,7 +205,7 @@ parse_buffer(size_t argc, char **argv, Memory &mem)
 			continue;
 		}
 
-		if(string(argv[i]).compare("--memory") == 0)  
+		if(string(argv[i]).compare("--feature") == 0)  
 		{
 			i++;
 			feature = Memory::stringToFeature(argv[i]);
@@ -414,7 +414,7 @@ read_args(size_t argc, char **argv)
 				if(string(argv[i]).compare("--instance") == 0)
 				{
 					i++;
-					exec.instance = atoi(argv[i]);
+					exec.instance = atoi(argv[i]) - 1;
 					continue;
 				}
 
@@ -597,7 +597,7 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 					if(args.sync.find(i.sync) == args.sync.end())
 					{
 						stringstream ss;
-						ss << "Could not find synchronization buffer " << i.sync << " of task \"" << tgTask.getName() << "\" instance " << i.instance << " in core " << core_position.first << "." << endl;
+						ss << "Could not find synchronization buffer " << i.sync << " of task \"" << tgTask.getName() << "\" instance " << i.instance + 1 << " in core " << core_position.first + 1 << "." << endl;
 						throw PelibException(ss.str());
 					}
 					sync = args.sync.find(i.sync)->second;
@@ -739,7 +739,7 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 	}
 	schedule.insert(pair<unsigned int, set<ExecTask>>(0, srt));
 
-	return Schedule("Sequential", tg.getName(), schedule, links, tg, pt);
+	return Schedule("Manual", tg.getName(), schedule, links, tg, pt);
 }
 
 const pelib::Schedule*
@@ -773,6 +773,7 @@ pelib_delete_schedule(pelib::Schedule *sched)
 typedef struct
 {
 	string schedule;
+	string linebreak, indent;
 } out_args_t;
 
 static out_args_t
@@ -780,6 +781,8 @@ output_args(size_t argc, char **argv)
 {
 	out_args_t args;
 	args.schedule = string(typeid(Schedule).name());
+	args.linebreak = string(" ");
+	args.indent = string();
 
 	for(size_t i = 0; i < argc; i++)
 	{
@@ -787,6 +790,15 @@ output_args(size_t argc, char **argv)
 		{
 			i++;
 			args.schedule = string(argv[i]);
+			continue;
+		}
+		if(string(argv[i]).compare("--multiline") == 0)
+		{
+			i++;
+			stringstream ss;
+			ss << endl;
+			args.linebreak = ss.str();
+			args.indent = string("\t");
 			continue;
 		}
 	}
@@ -807,9 +819,6 @@ void pelib_dump(std::ostream& cout, const std::map<std::string, pelib::Record*> 
 	}
 	const Schedule &sc = *(Schedule*)search_schedule->second;
 
-	const Platform &pt = sc.getPlatform();
-	const Taskgraph &tg = sc.getTaskgraph();
-
 	// Get all cores each task instance runs on
 	map<ExecTask, set<unsigned int>> etask_core;
 	set<Memory> sync;
@@ -823,7 +832,7 @@ void pelib_dump(std::ostream& cout, const std::map<std::string, pelib::Record*> 
 				search = etask_core.insert(pair<ExecTask, set<unsigned int>>(eTask, set<unsigned int>())).first;
 			}
 			search->second.insert(core_task.first);
-			if(eTask.getSync() != Memory::nullMemory())
+			if(eTask.getSync() != Memory::nullMemory() && sync.find(eTask.getSync()) == sync.end())
 			{
 				sync.insert(eTask.getSync());
 			}
@@ -831,7 +840,7 @@ void pelib_dump(std::ostream& cout, const std::map<std::string, pelib::Record*> 
 	}
 
 	// Generate options for each task
-	cout << "--input --file /dev/null --lib schedule-manual --args { ";
+	cout << "--input --file /dev/null --lib schedule-manual --args {" << args.linebreak;
 	set<ExecTask> etask_done;
 	
 	// Tasks
@@ -845,7 +854,7 @@ void pelib_dump(std::ostream& cout, const std::map<std::string, pelib::Record*> 
 			}
 
 			// name
-			cout << "--task " << eTask.getTask().getName() << " ";
+			cout << args.indent << "--task " << eTask.getTask().getName() << " ";
 
 			// instance
 			cout << "--instance " << eTask.getInstance() + 1 << " ";
@@ -868,7 +877,7 @@ void pelib_dump(std::ostream& cout, const std::map<std::string, pelib::Record*> 
 			}
 
 			// Master core
-			cout << "--master " << eTask.getMasterCore() + 1 << " ";
+			cout << "--master " << eTask.getMasterCore() + 1 << args.linebreak;
 
 			etask_done.insert(eTask);
 		}
@@ -877,23 +886,24 @@ void pelib_dump(std::ostream& cout, const std::map<std::string, pelib::Record*> 
 	// Links
 	for(const AllotedLink &link: sc.getLinks())
 	{
-		cout << "--link --producer " << link.getLink().getProducer()->getName() << " --producer-link " << link.getLink().getProducerName() << " --consumer " << link.getLink().getConsumer()->getName() << " --buffer-memory --memory \"" << Memory::featureToString(link.getQueueBuffer().getMemory().getFeature()) << "\" --level " << link.getQueueBuffer().getMemory().getLevel() << " --size " << link.getQueueBuffer().getSize() << " --core " << link.getQueueBuffer().getMemory().getCore() << " --level " << link.getQueueBuffer().getMemory().getLevel() << " ";
+		cout << args.indent << "--link --producer " << link.getLink().getProducer()->getName() << " --producer-link " << link.getLink().getProducerName() << " --consumer " << link.getLink().getConsumer()->getName() << " --consumer-link " << link.getLink().getConsumerName() << " --size " << link.getQueueBuffer().getSize() << args.linebreak;
+		cout << args.indent << args.indent << "--buffer-memory --feature \"" << Memory::featureToString(link.getQueueBuffer().getMemory().getFeature()) << "\" --core " << link.getQueueBuffer().getMemory().getCore() + 1 << " --level " << link.getQueueBuffer().getMemory().getLevel() << args.linebreak;
 
 		if(((int)link.getProducerMemory().getFeature() & 3 & (int)Memory::Feature::distributed) == (int)Memory::Feature::distributed)
 		{
-			cout << "--producer-memory --memory " << Memory::featureToString(link.getProducerMemory().getFeature()) << " --level " << link.getProducerMemory().getLevel() << " ";
+			cout << args.indent << args.indent << "--producer-memory --core " << link.getProducerMemory().getCore() + 1 << " --feature \"" << Memory::featureToString(link.getProducerMemory().getFeature()) << "\" --level " << link.getProducerMemory().getLevel() << args.linebreak;
 		}
 
 		if(((int)link.getConsumerMemory().getFeature() & 3 & (int)Memory::Feature::distributed) == (int)Memory::Feature::distributed)
 		{
-			cout << "--consumer-memory --memory " << Memory::featureToString(link.getConsumerMemory().getFeature()) << " --level " << link.getConsumerMemory().getLevel() << " ";
+			cout << args.indent << args.indent << "--consumer-memory --core " << link.getConsumerMemory().getCore() + 1 << " --feature \"" << Memory::featureToString(link.getConsumerMemory().getFeature()) << "\" --level " << link.getConsumerMemory().getLevel() << args.linebreak;
 		}
 	}
 
 	// Sync
 	for(Memory barrier: sync)
 	{
-		cout << "--sync --id " << barrier.getInstance() + 1 << " --level " << barrier.getLevel() << " --core " << barrier.getCore() << " --feature \"" << Memory::featureToString(barrier.getFeature()) << "\" ";
+		cout << args.indent << "--sync --id " << barrier.getInstance() + 1 << " --level " << barrier.getLevel() << " --core " << barrier.getCore() + 1 << " --feature \"" << Memory::featureToString(barrier.getFeature()) << "\"" << args.linebreak;
 	}
 	
 	cout << "}" << endl;
