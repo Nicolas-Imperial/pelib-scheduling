@@ -25,6 +25,7 @@
 #include <pelib/output.h>
 #include "schedule-parse.hpp"
 #include <pelib/PelibException.hpp>
+#include <pelib/argument_parsing.hpp>
 
 #ifdef debug
 #undef debug
@@ -422,11 +423,11 @@ read_args(size_t argc, char **argv)
 				{
 					i++;
 					
-					if(string(argv[i]).compare("{") == 0)
+					if(string(argv[i]).compare(BRACKET_OPEN) == 0)
 					{
 						i++;
 
-						for(;i < argc && string(argv[i]).compare("}") != 0; i++)
+						for(;i < argc && string(argv[i]).compare(BRACKET_CLOSE) != 0; i++)
 						{
 							pair<unsigned int, float> core_position;
 							int res = parse_run(argv[i], core_position);
@@ -594,6 +595,7 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 				Memory sync;
 				if(i.mapping.size() > 1) // We need synchronization data structure
 				{
+					debug("Hello world!");
 					if(args.sync.find(i.sync) == args.sync.end())
 					{
 						stringstream ss;
@@ -604,6 +606,7 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 				}
 				else
 				{
+					debug("Hello world!");
 					sync = Memory::nullMemory();
 				}
 				if(schedule.find(core_position.first) == schedule.end())
@@ -611,6 +614,12 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 					schedule.insert(pair<unsigned int, set<ExecTask>>(core_position.first, set<ExecTask>()));
 				}
 				
+				if(tgTask.getMaxWidth() < i.mapping.size())
+				{
+					stringstream ss;
+					ss << "Assigned " << i.mapping.size() << " cores to task \"" << tgTask.getName() << "\" but taskgraph description says it can run on " << tgTask.getMaxWidth() << " cores only." << endl;
+					throw PelibException(ss.str());
+				}
 				ExecTask eTask(tgTask, std::set<const AllotedLink*>(), freq, i.mapping.size(), core_position.second, i.instance, i.master, sync);
 				schedule.find(core_position.first)->second.insert(eTask);
 			}
@@ -633,7 +642,8 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 			{
 				task_time.find(eTask)->second = time;
 			}
-			time += eTask.getTask().runtime(eTask.getWidth(), eTask.getFrequency());
+			float offset = eTask.getTask().runtime(eTask.getWidth(), eTask.getFrequency());
+			time += offset;
 		}
 	}
 	
@@ -690,6 +700,20 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 			size = i.size;
 		}
 		
+/*
+		if(string(i.producer_name).compare("break") == 0)
+		{
+			debug(i.producer);
+			debug(i.consumer);
+			debug(i.producer_name);
+			debug(i.consumer_name);
+			debug(link_search->getProducer()->getName());
+			debug(link_search->getConsumer()->getName());
+			debug(link_search->getProducerName());
+			debug(link_search->getConsumerName());
+			debug(link_search->getDataType());
+		}
+*/
 		AllotedLink all(*link_search, Buffer(size, link_search->getDataType(), link_search->getHeader(), i.queueMem), i.producerMem, i.consumerMem);
 		links.insert(all);	
 	}
@@ -738,6 +762,27 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 		}
 	}
 	schedule.insert(pair<unsigned int, set<ExecTask>>(0, srt));
+
+	set<Memory> sync;
+	for(pair<unsigned int, set<ExecTask>> core_schedule: schedule)
+	{
+		for(const ExecTask &eTask: core_schedule.second)
+		{
+			pair<set<Memory>::const_iterator, bool> res = sync.insert(eTask.getSync());
+			if(!res.second)
+			{
+				debug(eTask.getSync().getCore());
+				debug(Memory::featureToString(eTask.getSync().getFeature()));
+				debug(eTask.getSync().getLevel());
+				debug(eTask.getSync().getInstance());
+				debug(res.first->getCore());
+				debug(Memory::featureToString(res.first->getFeature()));
+				debug(res.first->getLevel());
+				debug(res.first->getInstance());
+			}
+		}
+	}
+	debug(sync.size());
 
 	return Schedule("Manual", tg.getName(), schedule, links, tg, pt);
 }
@@ -840,7 +885,7 @@ void pelib_dump(std::ostream& cout, const std::map<std::string, pelib::Record*> 
 	}
 
 	// Generate options for each task
-	cout << "--input --file /dev/null --lib schedule-manual --args {" << args.linebreak;
+	cout << "--input --file /dev/null --lib schedule-manual --args " << BRACKET_OPEN << args.linebreak;
 	set<ExecTask> etask_done;
 	
 	// Tasks
@@ -863,12 +908,12 @@ void pelib_dump(std::ostream& cout, const std::map<std::string, pelib::Record*> 
 			cout << "--frequency " << eTask.getFrequency() << " ";
 
 			// mapping
-			cout << "--mapping { ";
+			cout << "--mapping " << BRACKET_OPEN << " ";
 			for(unsigned int core: etask_core.find(eTask)->second)
 			{
 				cout << core + 1 << "," << eTask.getStart() << " ";
 			}
-			cout << "} ";
+			cout << BRACKET_CLOSE << " ";
 
 			// barrier
 			if(eTask.getWidth() > 1)
@@ -906,5 +951,5 @@ void pelib_dump(std::ostream& cout, const std::map<std::string, pelib::Record*> 
 		cout << args.indent << "--sync --id " << barrier.getInstance() + 1 << " --level " << barrier.getLevel() << " --core " << barrier.getCore() + 1 << " --feature \"" << Memory::featureToString(barrier.getFeature()) << "\"" << args.linebreak;
 	}
 	
-	cout << "}" << endl;
+	cout << BRACKET_CLOSE << endl;
 }

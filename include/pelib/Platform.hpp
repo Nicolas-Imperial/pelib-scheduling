@@ -133,9 +133,6 @@ namespace pelib
 			/** Returns the frequency memory island corresponding to the core_id-th core of the platform, starting with 1 **/
 			virtual const island& getFrequencyIsland(size_t core_id) const;
 
-			/** Returns a pointer to core corresponding to its number id in the platform **/
-			virtual const Core& getCore(size_t id) const;
-
 			/** Returns the core id in the platform that corresponds to a pointer to core; throws a CastException if the core doesn't belong to this plaform **/
 			virtual size_t getCoreId(const Core*) const;
 

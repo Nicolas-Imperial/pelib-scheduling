@@ -120,7 +120,9 @@ namespace pelib
 			island isl;
 			for(island::const_iterator j = i->begin(); j != i->end(); j++)
 			{
-				isl.insert(&this->getCore(arch->getCoreId(*arch->getCores().find(*j))));
+				set<const Core*>::const_iterator search_core = arch->getCores().begin();
+				std::advance(search_core, arch->getCoreId(*arch->getCores().find(*j)) - 1);
+				isl.insert(*search_core);
 			}
 
 			this->shared.insert(isl);
@@ -131,7 +133,9 @@ namespace pelib
 			island isl;
 			for(island::const_iterator j = i->begin(); j != i->end(); j++)
 			{
-				isl.insert(&this->getCore(arch->getCoreId(*arch->getCores().find(*j))));
+				set<const Core*>::const_iterator search_core = arch->getCores().begin();
+				std::advance(search_core, arch->getCoreId(*arch->getCores().find(*j)) - 1);
+				isl.insert(*search_core);
 			}
 
 			this->main.insert(isl);
@@ -142,7 +146,9 @@ namespace pelib
 			island isl;
 			for(island::const_iterator j = i->begin(); j != i->end(); j++)
 			{
-				isl.insert(&this->getCore(arch->getCoreId(*arch->getCores().find(*j))));
+				set<const Core*>::const_iterator search_core = arch->getCores().begin();
+				std::advance(search_core, arch->getCoreId(*arch->getCores().find(*j)) - 1);
+				isl.insert(*search_core);
 			}
 
 			this->priv.insert(isl);
@@ -153,7 +159,9 @@ namespace pelib
 			island isl;
 			for(island::const_iterator j = i->begin(); j != i->end(); j++)
 			{
-				isl.insert(&this->getCore(arch->getCoreId(*arch->getCores().find(*j))));
+				set<const Core*>::const_iterator search_core = arch->getCores().begin();
+				std::advance(search_core, arch->getCoreId(*arch->getCores().find(*j)) - 1);
+				isl.insert(*search_core);
 			}
 
 			this->voltage.insert(isl);
@@ -164,7 +172,9 @@ namespace pelib
 			island isl;
 			for(island::const_iterator j = i->begin(); j != i->end(); j++)
 			{
-				isl.insert(&this->getCore(arch->getCoreId(*arch->getCores().find(*j))));
+				set<const Core*>::const_iterator search_core = arch->getCores().begin();
+				std::advance(search_core, arch->getCoreId(*arch->getCores().find(*j)) - 1);
+				isl.insert(*search_core);
 			}
 
 			this->freq.insert(isl);
@@ -392,18 +402,6 @@ namespace pelib
 		return record;
 	}
 
-	const Core&
-	Platform::getCore(size_t id) const
-	{
-		if(id > this->getCores().size())
-		{
-			throw CastException("Requesting core beyond the number of core in the platform.");
-		}
-		island::iterator it = this->cores.begin();
-		std::advance(it, id - 1);
-		return **it;
-	}
-
 	size_t
 	Platform::getCoreId(const Core* core) const
 	{
@@ -429,7 +427,9 @@ namespace pelib
 			throw CastException("Requesting shared memory island beyond the number of islands in the platform.");
 		}
 		islands isls;
-		const Core &core = this->getCore(id);
+		set<const Core*>::const_iterator core_search = this->getCores().begin();
+		std::advance(core_search, id - 1);
+		const Core &core = **core_search;
 		for(islands::const_iterator i = this->getSharedMemoryIslands().begin(); i != this->getSharedMemoryIslands().end(); i++)
 		{
 			if(i->find(&core) != i->end())
@@ -488,7 +488,9 @@ namespace pelib
 	Platform::mainMemoryIslands(size_t id) const
 	{
 		islands isls;
-		const Core &core = this->getCore(id);
+		set<const Core*>::const_iterator core_search = this->getCores().begin();
+		std::advance(core_search, id - 1);
+		const Core &core = **core_search;
 		for(Platform::islands::const_iterator i = this->getMainMemoryIslands().begin(); i != this->getMainMemoryIslands().end(); i++)
 		{
 			if(i->find(&core) != i->end())
@@ -510,7 +512,9 @@ namespace pelib
 	Platform::privateMemoryIslands(size_t id) const
 	{
 		Platform::islands isls;
-		const Core &core = this->getCore(id);
+		set<const Core*>::const_iterator core_search = this->getCores().begin();
+		std::advance(core_search, id - 1);
+		const Core &core = **core_search;
 		for(Platform::islands::const_iterator i = this->getPrivateMemoryIslands().begin(); i != this->getPrivateMemoryIslands().end(); i++)
 		{
 			if(i->find(&core) != i->end())
@@ -531,7 +535,9 @@ namespace pelib
 	const Platform::island&
 	Platform::getVoltageIsland(size_t id) const
 	{
-		const Core &core = this->getCore(id);
+		set<const Core*>::const_iterator core_search = this->getCores().begin();
+		std::advance(core_search, id - 1);
+		const Core &core = **core_search;
 		for(Platform::islands::const_iterator i = this->getVoltageIslands().begin(); i != this->getVoltageIslands().end(); i++)
 		{
 			if(i->find(&core) != i->end())
@@ -552,7 +558,9 @@ namespace pelib
 	const Platform::island&
 	Platform::getFrequencyIsland(size_t id) const
 	{
-		const Core &core = this->getCore(id);
+		set<const Core*>::const_iterator core_search = this->getCores().begin();
+		std::advance(core_search, id - 1);
+		const Core &core = **core_search;
 		for(Platform::islands::const_iterator i = this->getFrequencyIslands().begin(); i != this->getFrequencyIslands().end(); i++)
 		{
 			if(i->find(&core) != i->end())
