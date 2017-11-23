@@ -22,3 +22,10 @@ param p := 8;
 
 # Frequency levels
 set F := 1 2 3 4 5;
+param Funit := 1000000;
+
+param Fin := 1;
+set Fi[1] := 1 2 3 4 5 6 7 8;
+
+param Sin := 1;
+set Si[1] := 1 2 3 4 5 6 7 8;

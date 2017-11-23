@@ -76,6 +76,12 @@ namespace pelib
 			virtual void
 			setName(const string name);
 
+			Taskgraph
+			merge(const Taskgraph &tg, const string &name, const string &deadline, const set<AbstractLink> &junction) const;
+
+			void
+			merge(const Taskgraph &tg, const string &name, const string &deadline, const set<AbstractLink> &junction);
+
 			/** Get the formula that computes the deadline for each pipeline stage running this application **/
 			virtual string
 			getDeadlineCalculator() const;

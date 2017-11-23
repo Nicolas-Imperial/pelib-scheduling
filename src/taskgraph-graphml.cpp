@@ -56,14 +56,76 @@ pelib_delete_record(Record *obj)
         delete obj;
 }
 
+struct args
+{
+	string taskgraph, platform;
+};
+typedef struct args args_t;
+
+static
+args_t
+parse(char** arg)
+{
+	args_t args;
+	args.taskgraph = typeid(Taskgraph).name();
+	args.platform = typeid(Platform).name();
+
+	for(; arg[0] != NULL && string(arg[0]).compare("--") != 0; arg++)
+	{
+		if(strcmp(arg[0], "--taskgraph") == 0)
+		{
+			arg++;
+			string name;
+			if(arg[0] != NULL)
+			{
+				name = string(arg[0]);
+			}
+			else
+			{
+				name = typeid(Taskgraph).name();
+			}
+			args.taskgraph = name;
+			continue;
+		}
+
+		if(strcmp(arg[0], "--platform") == 0)
+		{
+			arg++;
+			string name;
+			if(arg[0] != NULL)
+			{
+				name = string(arg[0]);
+			}
+			else
+			{
+				name = typeid(Platform).name();
+			}
+			args.platform = name;
+			continue;
+		}
+
+		break;
+	}
+
+	return args;
+}
+
 // /!\ the content of argv is freed after this function is run
 void
 pelib_dump(std::ostream& cout, const std::map<string, Record*> &records, size_t argc, char **argv)
 {
-	Taskgraph* tg = (Taskgraph*)records.find(typeid(Taskgraph).name())->second;
-	Platform* pf = (Platform*)records.find(typeid(Platform).name())->second;
+	args_t args = parse(argv);
+	Taskgraph* tg = (Taskgraph*)records.find(args.taskgraph)->second;
+	Platform* pf = (Platform*)records.find(args.platform)->second;
+	
+	if(records.find(args.taskgraph) == records.end())
+	{
+		stringstream ss;
+		ss << "taskgraph-graphml: Cannot find any record of type Taskgraph named \"" << args.taskgraph << "\".";
+		throw PelibException(ss.str());
+	}
 
-	if(records.find(typeid(Platform).name()) != records.end())
+	if(records.find(args.platform) != records.end())
 	{
 		GraphML().dump(cout, tg, pf);
 	}

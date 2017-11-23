@@ -78,7 +78,7 @@ schedule-parse.cpp
 bincxx_package = 
 
 ## dynamic library packages and their sources
-corepp = pelib-scheduling pelib-platform-ampl_input pelib-platform-ampl_output pelib-taskgraph-graphml pelib-taskgraph-streamit pelib-taskgraph-ampl_input pelib-taskgraph-ampl_output pelib-schedule-xml pelib-schedule-tetris pelib-schedule-ampl_input pelib-schedule-ampl_output pelib-schedule pelib-generate pelib-schedule-manual pelib-schedule-copy
+corepp = pelib-scheduling pelib-platform-ampl_input pelib-platform-ampl_output pelib-taskgraph-graphml pelib-taskgraph-streamit pelib-taskgraph-ampl_input pelib-taskgraph-ampl_output pelib-schedule-xml pelib-schedule-tetris pelib-schedule-ampl_input pelib-schedule-ampl_output pelib-schedule pelib-generate pelib-schedule-manual pelib-schedule-copy pelib-schedule-merge pelib-taskgraph-split
 sharedcxx_package = $(if $(filter 1,$(CORE++_SHARED)),$(corepp))
 sharedcc_package =
 
@@ -290,12 +290,47 @@ shared_pelib-generate_cxxflags = -fPIC
 shared_pelib-generate_pkg_description = Platform parser and output in AMPL input format
 shared_pelib-generate_embed =
 
+sharedcxx_pelib-taskgraph-split_src = taskgraph-split.cpp
+shared_pelib-taskgraph-split_export = $(sharedcxx_pelib-taskgraph-split_embed) $(sharedcxx_pelib-taskgraph-split_src)
+shared_pelib-taskgraph-split_libs = -lpelib-scheduling
+shared_pelib-taskgraph-split_ldflags = -L.
+shared_pelib-taskgraph-split_deps = libpelib-scheduling.so
+shared_pelib-taskgraph-split_pkg =  
+shared_pelib-taskgraph-split_pkg_url = http://www.ida.liu.se/~nicme26
+shared_pelib-taskgraph-split_pkg_ld =
+shared_pelib-taskgraph-split_pkg_libs =
+shared_pelib-taskgraph-split_cxxflags = -fPIC
+shared_pelib-taskgraph-split_pkg_description = Platform parser and output in AMPL input format
+shared_pelib-taskgraph-split_embed =
+
+sharedcxx_pelib-schedule-merge_src = schedule-merge.cpp
+shared_pelib-schedule-merge_export = $(sharedcxx_pelib-schedule-merge_embed) $(sharedcxx_pelib-schedule-merge_src)
+shared_pelib-schedule-merge_libs = -lpelib-scheduling
+shared_pelib-schedule-merge_ldflags = -L.
+shared_pelib-schedule-merge_deps = libpelib-scheduling.so
+shared_pelib-schedule-merge_pkg =  
+shared_pelib-schedule-merge_pkg_url = http://www.ida.liu.se/~nicme26
+shared_pelib-schedule-merge_pkg_ld =
+shared_pelib-schedule-merge_pkg_libs =
+shared_pelib-schedule-merge_cxxflags = -fPIC
+shared_pelib-schedule-merge_pkg_description = Platform parser and output in AMPL input format
+shared_pelib-schedule-merge_embed =
+
 ## static library packages and their sources
 lib_package = $(if $(filter 1,$(CORE++_STATIC)),$(corepp))
 
 ## test packages and their sources
-testcxx_project = parser
+testcxx_project = platform
 testcxx_package = $(if $(filter 1,$(CORE++_SHARED)),$(testcxx_project),$(if $(filter 1,$(CORE++_STATIC)),$(testcxx_project)))
+
+testcxx_platform_src = test_platform.cpp
+test_platform_export = $(test_platform_embed) $(testcxx_platform_src)
+test_platform_deps = libpelib-scheduling.so
+test_platform_libs = -lpelib-scheduling
+test_platform_pkg = pelib-mip
+test_platform_ldflags = -L.
+test_platform_embed = platform.dat
+test_platform_static = 0
 
 testcxx_parser_src = test_parser.cpp
 test_parser_export = $(test_parser_embed) $(testcxx_parser_src) make_algebra.cpp

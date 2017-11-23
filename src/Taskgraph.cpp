@@ -74,6 +74,34 @@ namespace pelib
 	}
 
 	void
+	Taskgraph::merge(const Taskgraph &tg, const string &name, const string &deadline, const set<AbstractLink> &junction)
+	{
+		const set<Task> &foreign_tasks = tg.getTasks();
+		const set<AbstractLink> &foreign_links = tg.getLinks();
+
+		set<Task> this_tasks = this->getTasks();
+		set<AbstractLink> this_links = this->getLinks();
+
+		this_tasks.insert(foreign_tasks.begin(), foreign_tasks.end());
+		this_links.insert(foreign_links.begin(), foreign_links.end());
+		this_links.insert(junction.begin(), junction.end());
+
+		this->tasks = this_tasks;
+		this->setLinks(this_links);
+		
+		this->setDeadlineCalculator(deadline);
+	}
+
+	Taskgraph
+	Taskgraph::merge(const Taskgraph &tg, const string &name, const string &deadline, const set<AbstractLink> &junction) const
+	{
+		Taskgraph newtg(*this);
+		newtg.merge(tg, name, deadline, junction);
+
+		return newtg;
+	}
+
+	void
 	Taskgraph::setLinks(const set<AbstractLink> &links)
 	{
 		// Add all links so their endpoints point to tasks in the local collection
@@ -206,7 +234,8 @@ namespace pelib
 	Taskgraph*
 	Taskgraph::clone() const
 	{
-		return new Taskgraph(this->getTasks(), this->getLinks());
+		Taskgraph *tg = new Taskgraph(this);
+		return tg;
 	}
 
 	Algebra

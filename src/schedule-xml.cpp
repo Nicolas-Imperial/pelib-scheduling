@@ -39,6 +39,43 @@ extern "C" {
 #define debug(expr) cerr << "[" << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << "] " << #expr << " = \"" << expr << "\"." << endl;
 #endif
 
+struct args
+{
+	string schedule;
+};
+typedef struct args args_t;
+
+static
+args_t
+parse_dump(char** arg)
+{
+	args_t args;
+	args.schedule = typeid(Schedule).name();
+
+	for(; arg[0] != NULL && string(arg[0]).compare("--") != 0; arg++)
+	{
+		if(strcmp(arg[0], "--schedule") == 0)
+		{
+			arg++;
+			string name;
+			if(arg[0] != NULL)
+			{
+				name = string(arg[0]);
+			}
+			else
+			{
+				name = typeid(Schedule).name();
+			}
+			args.schedule = name;
+			continue;
+		}
+
+		break;
+	}
+
+	return args;
+}
+
 // /!\ the content of argv is freed after this function is run
 pelib::Record*
 pelib_parse(std::istream& cin, size_t argc, char **argv, const map<string, Record*> &inputs)
@@ -55,11 +92,12 @@ pelib_parse(std::istream& cin, size_t argc, char **argv, const map<string, Recor
 void
 pelib_dump(std::ostream& cout, const std::map<string, Record*> &records, size_t argc, char **argv)
 {
+	args_t args = parse_dump(argv);
 	Schedule *sc;
 
-	if(records.find(typeid(Schedule).name()) != records.end())
+	if(records.find(args.schedule) != records.end())
 	{
-		sc = (Schedule*)records.find(typeid(Schedule).name())->second;
+		sc = (Schedule*)records.find(args.schedule)->second;
 	}
 	else
 	{

@@ -20,6 +20,7 @@
 #include <iostream>
 #include <stddef.h>
 #include <set>
+#include <map>
 
 #ifndef PELIB_CORE
 #define PELIB_CORE
@@ -35,13 +36,13 @@ namespace pelib
 			{
 				bool operator() (const Core *x, const Core *y) const
 				{
-					return x->id < y->id;
+					return (size_t)x < (size_t)y;
 				}
 			};
 
 			/** Constructor **/
 			Core();
-			Core(size_t id);
+			//Core(size_t id);
 			/** Returns a pointer to a copy of this Core **/
 			virtual Core* clone() const = 0;
 			/** Destructor **/
@@ -54,10 +55,11 @@ namespace pelib
 			operator<(const Core &other) const;
 	    		virtual bool
 			operator==(const Core &other) const;
-			int id;
+			//int id;
 		protected:
-			static size_t counter;
+			//static size_t counter;
 			float frequencyUnit;
+			std::map<unsigned int, size_t> private_memory_size; // level -> size association for a core's private memory
 		private:
 	};
 }

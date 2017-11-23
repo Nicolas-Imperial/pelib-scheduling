@@ -29,6 +29,7 @@
 #include <pelib/CastException.hpp>
 #include <pelib/PelibException.hpp>
 #include <pelib/Task.hpp>
+#include <pelib/GraphML.hpp>
 
 #ifdef debug
 #undef debug
@@ -54,7 +55,7 @@ namespace pelib
 	}
 
 	void
-	Schedule::setSchedule(const Table &schedule, const std::set<AllotedLink> &links, const Taskgraph &application, const Platform &platform)
+	Schedule::setSchedule(const Table &sched, const std::set<AllotedLink> &links, const Taskgraph &application, const Platform &platform)
 	{
 		// First copy taskgraph and platform
 		this->taskgraph = application;
@@ -62,7 +63,6 @@ namespace pelib
 
 		this->schedule = Schedule::Table();
 		this->links = set<AllotedLink>();
-
 		for(set<AllotedLink>::iterator i = links.begin(); i != links.end(); i++)
 		{
 			set<AbstractLink>::const_iterator link = this->getTaskgraph().getLinks().find(i->getLink());
@@ -76,7 +76,7 @@ namespace pelib
 		}
 
 		// Copy schedule with all exec task refering to tasks within internal copy of taskgraph
-		for(Table::const_iterator i = schedule.begin(); i != schedule.end(); i++)
+		for(Table::const_iterator i = sched.begin(); i != sched.end(); i++)
 		{
 			set<ExecTask> core_schedule;
 			for(set<ExecTask>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
@@ -108,8 +108,80 @@ namespace pelib
 	Schedule::Schedule(const Schedule& src)
 	{
 		this->name = src.getName();
-		this->appName = src.getName();
+		this->appName = src.getAppName();
 		this->setSchedule(src.getSchedule(), src.getLinks(), src.getTaskgraph(), src.getPlatform());
+	}
+
+	void
+	Schedule::merge(const Schedule &schedule, const string &schedule_name, const string &app_name, const set<AllotedLink> &junction)
+	{
+		const Schedule::Table &foreign_table = schedule.getSchedule();
+		const set<AllotedLink> &foreign_links = schedule.getLinks();
+		const Taskgraph &foreign_taskgraph = schedule.getTaskgraph();
+
+		Schedule me(*this);
+		Schedule::Table this_table = me.getSchedule();
+		set<AllotedLink> this_links = me.getLinks();
+		Taskgraph this_taskgraph = me.getTaskgraph();
+		Platform this_platform = me.getPlatform();
+			
+		// Merge task scheduling
+		for(const pair<unsigned int, set<ExecTask>> &core_etask: foreign_table)
+		{
+			Schedule::Table::const_iterator search = this_table.find(core_etask.first);
+			float start;
+			if(search == this_table.end())
+			{
+				pair<Schedule::Table::const_iterator, bool> res = this_table.insert(pair<unsigned int, set<ExecTask>>(core_etask.first, set<ExecTask>()));
+				search = res.first;
+				start = 0;
+			}
+			else
+			{
+				const ExecTask &eTask = *this_table.find(core_etask.first)->second.rbegin();
+				start = eTask.getStart() + eTask.getTask().runtime(eTask.getWidth(), eTask.getFrequency());
+			}
+
+			// Is this recommended?
+			set<ExecTask> &tasks = (set<ExecTask>&)search->second;
+			for(const ExecTask &feTask: core_etask.second)
+			{
+				set<ExecTask>::const_iterator task_search = tasks.find(Task(feTask.getTask().getName()));
+				if(task_search != tasks.end())
+				{
+					stringstream ss;
+					ss << "Task \"" << task_search->getTask().getName() << "\" instance " << task_search->getInstance() << " is scheduled in both schedules to merge";
+					throw PelibException(ss.str());
+				}
+				
+				ExecTask eTask(feTask.getTask(), feTask.allLinks(), feTask.getFrequency(), feTask.getWidth(), start, feTask.getInstance(), feTask.getMasterCore(), feTask.getSync());
+				tasks.insert(eTask);
+				start += eTask.getTask().runtime(eTask.getWidth(), eTask.getFrequency());
+			}
+		}
+
+		// Merge link allocation
+		// Extract all abstract links from alloted links
+		set<AbstractLink> absJunction;
+		for(const AllotedLink &al: junction)
+		{
+			absJunction.insert(al.getLink());
+		}
+		this_links.insert(foreign_links.begin(), foreign_links.end());
+		this_links.insert(junction.begin(), junction.end());
+
+		// Set schedule
+		this_taskgraph.merge(foreign_taskgraph, this_taskgraph.getName(), this_taskgraph.getDeadlineCalculator(), absJunction);
+
+		this->setSchedule(this_table, this_links, this_taskgraph, this_platform);
+	}
+
+	Schedule
+	Schedule::merge(const Schedule &schedule, const string &schedule_name, const string &app_name, const set<AllotedLink> &junction) const
+	{
+		Schedule copy(*this);
+		copy.merge(schedule, schedule_name, app_name, junction);	
+		return copy;
 	}
 
 	void
@@ -137,9 +209,11 @@ namespace pelib
 		}
 		else
 		{
+			map<ExecTask, unsigned int> master;
 			for(map<int, map<int, float> >::const_iterator i = sched->getValues().begin(); i != sched->getValues().end(); i++)
 			{
 				set<ExecTask> core_schedule;
+				float start = 0;
 				
 				for(map<int, float>::const_iterator j = i->second.begin(); j != i->second.end(); j++)
 				{
@@ -157,17 +231,33 @@ namespace pelib
 							task_str = string(task_name->getValues().find((int)j->second)->second);
 						}
 
-						set<Task>::const_iterator task_iter = this->getTaskgraph().getTasks().find(Task(task_str));
-						if(task_iter == this->getTaskgraph().getTasks().end())
+						set<Task>::const_iterator task_iter = taskgraph.getTasks().find(Task(task_str));
+						if(task_iter == taskgraph.getTasks().end())
 						{
-							throw PelibException("Schedule contains a task id that does not exist in taskgraph");
+							stringstream ss;
+							ss << "Trying to schedule task \"" << task_str << "\" but it does not exist in taskgraph";
+							throw PelibException(ss.str());
 						}
 						const Task &task = *task_iter;
 
 						if(task.getWorkload() > 0)
 						{
-							// TODO: ?? How does the compiler even accept this?
-							Task exec(task);
+							unsigned int width = wi->find(j->second);
+							float frequency = freq->find(j->second);
+							unsigned int master_id;
+							ExecTask dummy(task, set<AllotedLink>(), frequency, width, start, 0, 0, Memory::nullMemory());
+							if(master.find(dummy) == master.end())
+							{
+								master_id = i->first - 1;
+								master.insert(pair<ExecTask, unsigned int>(dummy, i->first - 1));
+							}
+							else
+							{
+								map<ExecTask, unsigned int>::const_iterator search = master.find(dummy);
+								master_id = search->second;
+							}
+							ExecTask exec(task, set<AllotedLink>(), frequency, width, start, 0, master_id, Memory::nullMemory());
+							start += exec.getTask().runtime(width, frequency);
 							core_schedule.insert(exec);
 						}
 					}
@@ -183,7 +273,7 @@ namespace pelib
 	Schedule*
 	Schedule::clone() const
 	{
-		Schedule *clone = new Schedule(this->getName(), this->getName(), this->getSchedule(), this->getLinks(), this->getTaskgraph(), this->getPlatform());
+		Schedule *clone = new Schedule(this->getName(), this->getAppName(), this->getSchedule(), this->getLinks(), this->getTaskgraph(), this->getPlatform());
 
 		return clone;
 	}
@@ -320,6 +410,12 @@ namespace pelib
 			throw PelibException("Requested core id that does not exist in schedule");
 		}
 		return i->second;
+	}
+
+	void
+	Schedule::allocateLinks(const Schedule &schedule)
+	{
+		// Do nothing
 	}
 
 	set<const Task*>

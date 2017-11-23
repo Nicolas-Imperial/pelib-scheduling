@@ -97,7 +97,7 @@ namespace pelib
 			virtual Platform* clone() const;
 
 			/** Returns all cores in the platform **/
-			virtual const std::set<const Core*, Core::LessCorePtrByCoreId>& getCores() const;
+			virtual const island& getCores() const;
 
 			/** Returns true if all cores are identical and false otherwise **/
 			virtual bool isHomogeneous() const;
@@ -148,6 +148,8 @@ namespace pelib
 			island cores;
 			/** Islands **/
 			islands shared, main, priv, voltage, freq;
+			std::map<std::pair<island, unsigned int>, size_t> shared_memory_size; // (island,level) -> size for shared memory
+			std::map<unsigned int, size_t> distributed_memory_size; // level -> size for distributed memory
 		private:		
 			void copy(const Platform *pt);
 	};

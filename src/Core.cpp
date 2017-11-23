@@ -25,32 +25,33 @@ using namespace std;
 
 namespace pelib
 {
-	size_t Core::counter = 0;
+	//size_t Core::counter = 0;
 	Core::Core()
 	{
-		this->id = Core::counter++;
+		//this->id = Core::counter++;
 	}	
 
+/*
 	Core::Core(size_t id)
 	{
 		this->id = id;
 	}
+*/
 
 	Core::~Core()
 	{
 		// Do nothing
 	}
 
-	
 	bool
 	Core::operator<(const Core &other) const
 	{
-		return this->id < other.id;
+		return (size_t)this < (size_t)&other;
 	}
 
 	bool
 	Core::operator==(const Core &other) const
 	{
-		return this->id == other.id;
+		return (size_t)this == (size_t)&other;
 	}
 }

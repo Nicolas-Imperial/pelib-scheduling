@@ -74,6 +74,12 @@ namespace pelib
 			virtual const Table&
 			getSchedule() const;
 
+			virtual void
+			merge(const Schedule &schedule, const string &schedule_name, const string &app_name, const set<AllotedLink> &junction);
+
+			virtual Schedule
+			merge(const Schedule &schedule, const string &schedule_name, const string &app_name, const set<AllotedLink> &junction) const;
+
 			const Taskgraph&
 			getTaskgraph() const;
 
@@ -158,6 +164,8 @@ namespace pelib
 			static
 			Algebra
 			addStartTime(const Algebra &data, const Taskgraph &tg, const Platform &platform);
+			void
+			allocateLinks(const Schedule &schedule);
 
 		protected:
 			std::string name, appName;

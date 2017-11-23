@@ -23,6 +23,8 @@
 #include <pelib/DummyCore.hpp>
 
 #include <pelib/Scalar.hpp>
+#include <pelib/Vector.hpp>
+#include <pelib/Matrix.hpp>
 #include <pelib/Set.hpp>
 #include <pelib/ParseException.hpp>
 #include <pelib/CastException.hpp>
@@ -103,10 +105,12 @@ namespace pelib
 	void
 	Platform::copy(const Platform *arch)
 	{
+		Platform::island stuff = arch->getCores();
 		this->cores.clear();
 		for(island::const_iterator i = arch->getCores().begin(); i != arch->getCores().end(); i++)
 		{
-			this->cores.insert((*i)->clone());
+			Core *cpy = (*i)->clone();
+			this->cores.insert(cpy);
 		}
 
 		this->shared.clear();
@@ -120,9 +124,10 @@ namespace pelib
 			island isl;
 			for(island::const_iterator j = i->begin(); j != i->end(); j++)
 			{
-				set<const Core*>::const_iterator search_core = arch->getCores().begin();
+				set<const Core*>::const_iterator search_core = this->getCores().begin();
 				std::advance(search_core, arch->getCoreId(*arch->getCores().find(*j)) - 1);
-				isl.insert(*search_core);
+				const Core *core_ptr = *search_core;
+				isl.insert(core_ptr);
 			}
 
 			this->shared.insert(isl);
@@ -133,9 +138,10 @@ namespace pelib
 			island isl;
 			for(island::const_iterator j = i->begin(); j != i->end(); j++)
 			{
-				set<const Core*>::const_iterator search_core = arch->getCores().begin();
+				set<const Core*>::const_iterator search_core = this->getCores().begin();
 				std::advance(search_core, arch->getCoreId(*arch->getCores().find(*j)) - 1);
-				isl.insert(*search_core);
+				const Core *core_ptr = *search_core;
+				isl.insert(core_ptr);
 			}
 
 			this->main.insert(isl);
@@ -146,9 +152,10 @@ namespace pelib
 			island isl;
 			for(island::const_iterator j = i->begin(); j != i->end(); j++)
 			{
-				set<const Core*>::const_iterator search_core = arch->getCores().begin();
+				set<const Core*>::const_iterator search_core = this->getCores().begin();
 				std::advance(search_core, arch->getCoreId(*arch->getCores().find(*j)) - 1);
-				isl.insert(*search_core);
+				const Core *core_ptr = *search_core;
+				isl.insert(core_ptr);
 			}
 
 			this->priv.insert(isl);
@@ -159,9 +166,10 @@ namespace pelib
 			island isl;
 			for(island::const_iterator j = i->begin(); j != i->end(); j++)
 			{
-				set<const Core*>::const_iterator search_core = arch->getCores().begin();
+				set<const Core*>::const_iterator search_core = this->getCores().begin();
 				std::advance(search_core, arch->getCoreId(*arch->getCores().find(*j)) - 1);
-				isl.insert(*search_core);
+				const Core *core_ptr = *search_core;
+				isl.insert(core_ptr);
 			}
 
 			this->voltage.insert(isl);
@@ -172,9 +180,10 @@ namespace pelib
 			island isl;
 			for(island::const_iterator j = i->begin(); j != i->end(); j++)
 			{
-				set<const Core*>::const_iterator search_core = arch->getCores().begin();
+				set<const Core*>::const_iterator search_core = this->getCores().begin();
 				std::advance(search_core, arch->getCoreId(*arch->getCores().find(*j)) - 1);
-				isl.insert(*search_core);
+				const Core *core_ptr = *search_core;
+				isl.insert(core_ptr);
 			}
 
 			this->freq.insert(isl);
@@ -200,6 +209,12 @@ namespace pelib
 		const Set<float> *set_F = arch.find<Set<float> >("F");
 		const Set<float> *set_Fi = arch.find<Set<float> >("Fi");
 		const Set<float> *set_Si = arch.find<Set<float> >("Si");
+		const Vector<int, float> *vector_pml = arch.find<Vector<int, float> >("pml"); // Number of levels for private memory of each core
+		const Vector<int, float> *vector_sml = arch.find<Vector<int, float> >("sml"); // Number of levels for shared memories for each island
+		const Scalar<int> *scalar_dml = arch.find<Scalar<int> >("dml"); // Number of levels for distributed memory
+		const Matrix<int, int, float> *matrix_pms = arch.find<Matrix<int, int, float> >("pms"); // Size of each private memory level of each core
+		const Matrix<int, int, float> *matrix_sms = arch.find<Matrix<int, int, float> >("sms"); // Size of each shared memory level of each island
+		const Vector<int, float> *vector_dms = arch.find<Vector<int, float> >("dms"); // Size of each distributed memory level
 
 		if(scalar_p == NULL || set_F == NULL || f_unit == NULL || set_Fi == NULL || scalar_fin == NULL)
 		{
@@ -230,7 +245,7 @@ namespace pelib
 
 		for(size_t i = 0; i < scalar_p->getValue(); i++)
 		{
-			const Core *core = new DummyCore(i + 1, set_F->getValues(), f_unit == NULL ? 1 : f_unit->getValue());
+			const Core *core = new DummyCore(set_F->getValues(), f_unit == NULL ? 1 : f_unit->getValue());
 			this->cores.insert(core);
 			island isl;
 			isl.insert(core);
