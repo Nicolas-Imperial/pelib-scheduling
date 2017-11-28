@@ -32,6 +32,8 @@ namespace pelib
 	class Core
 	{
 		public:
+			typedef unsigned long long int MemorySize;
+
 			struct LessCorePtrByCoreId 
 			{
 				bool operator() (const Core *x, const Core *y) const
@@ -42,24 +44,29 @@ namespace pelib
 
 			/** Constructor **/
 			Core();
-			//Core(size_t id);
+
+			Core(const std::map<unsigned int, MemorySize> &pm);
+
 			/** Returns a pointer to a copy of this Core **/
 			virtual Core* clone() const = 0;
 			/** Destructor **/
 			virtual ~Core();
 			/** Returns the set of frequencies admissible by this core **/
-			virtual const std::set<float>& getFrequencies() const = 0;
+			virtual const std::set<unsigned int>& getFrequencies() const = 0;
 			/** Returns the frequency multiplier of the frequency set to obtain frequencies in Hertz **/
-			virtual float getFrequencyUnit() const = 0;
+			virtual unsigned int getFrequencyUnit() const = 0;
+
+			const std::map<unsigned int, Core::MemorySize>&
+			getPrivateMemories() const;
+
 			virtual bool
 			operator<(const Core &other) const;
 	    		virtual bool
 			operator==(const Core &other) const;
-			//int id;
 		protected:
 			//static size_t counter;
-			float frequencyUnit;
-			std::map<unsigned int, size_t> private_memory_size; // level -> size association for a core's private memory
+			unsigned int frequencyUnit;
+			std::map<unsigned int, MemorySize> privateMemorySize; // level -> size association for a core's private memory
 		private:
 	};
 }

@@ -241,10 +241,10 @@ namespace pelib
 	Algebra
 	Taskgraph::buildAlgebra() const
 	{
-		set<float> f;
+		set<unsigned int> f;
 		f.insert(1);
 		set<const Core*, Core::LessCorePtrByCoreId> cores;
-		cores.insert(new DummyCore(f, 1));
+		cores.insert(new DummyCore(f, 1, map<unsigned int, Core::MemorySize>()));
 		Platform arch(cores);
 		
 		return buildAlgebra(Platform(cores));

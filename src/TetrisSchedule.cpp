@@ -212,13 +212,13 @@ RGBtoHSL(uint32_t rgb, double &C)
 
 static
 map<float, uint32_t>
-makeGradient(vector<uint32_t> colors, set<float> values)
+makeGradient(vector<uint32_t> colors, set<unsigned int> values)
 {
 	map<float, uint32_t> gradient;
 	float minValue = *values.begin();
 	float maxValue = *values.rbegin();
 
-	for(set<float>::iterator i = values.begin(); i != values.end(); i++)
+	for(set<unsigned int>::iterator i = values.begin(); i != values.end(); i++)
 	{
 		double C;
 		float value = *i;
@@ -815,11 +815,11 @@ TetrisSchedule::dump(ostream& os, const Schedule *sched) const
 {
 	const Platform *pt = &sched->getPlatform();
 	const Taskgraph *tg = &sched->getTaskgraph();
-	set<float> frequencies;
+	set<unsigned int> frequencies;
 	for(set<const Core*>::iterator i = pt->getCores().begin(); i != pt->getCores().end(); i++)
 	{
 		const Core *core = *i;
-		for(set<float>::iterator j = core->getFrequencies().begin(); j != core->getFrequencies().end(); j++)
+		for(set<unsigned int>::iterator j = core->getFrequencies().begin(); j != core->getFrequencies().end(); j++)
 		{
 			frequencies.insert(*j);
 		}

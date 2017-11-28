@@ -31,12 +31,10 @@ namespace pelib
 		//this->id = Core::counter++;
 	}	
 
-/*
-	Core::Core(size_t id)
+	Core::Core(const std::map<unsigned int, Core::MemorySize> &pm) : privateMemorySize(pm)
 	{
-		this->id = id;
+		// Do nothing
 	}
-*/
 
 	Core::~Core()
 	{
@@ -47,6 +45,12 @@ namespace pelib
 	Core::operator<(const Core &other) const
 	{
 		return (size_t)this < (size_t)&other;
+	}
+
+	const std::map<unsigned int, Core::MemorySize>&
+	Core::getPrivateMemories() const
+	{
+		return this->privateMemorySize;
 	}
 
 	bool

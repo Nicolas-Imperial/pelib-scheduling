@@ -17,11 +17,15 @@
  along with Pelib. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#include <typeinfo>
 #include <set>
 
 #include <pelib/Core.hpp>
 #include <pelib/Algebra.hpp>
+#include <pelib/AmplInputDataParser.hpp>
+#include <pelib/AmplInputDataOutput.hpp>
+#include <pelib/AmplOutputDataParser.hpp>
+#include <pelib/AmplOutputDataOutput.hpp>
 
 #ifndef PELIB_PLATFORM
 #define PELIB_PLATFORM
@@ -56,6 +60,15 @@ namespace pelib
 			};
 			typedef std::set<island, LessIslandByFirstCoreId> islands;
 
+			static std::vector<AmplInputDataParser*> AmplInputParsers();
+			static std::vector<AmplInputDataOutput*> AmplInputOutputs();
+			static std::pair<std::vector<AmplInputDataParser*>, std::vector<AmplInputDataOutput*> > AmplInputHandlers();
+
+			static std::vector<AmplOutputDataParser*> AmplOutputParsers();
+			static std::vector<AmplOutputDataOutput*> AmplOutputOutputs();
+			static std::pair<std::vector<AmplOutputDataParser*>, std::vector<AmplOutputDataOutput*> > AmplOutputHandlers();
+			static const std::map<std::string, const std::type_info&> &getAmplParsingDirectives();
+
 			/** Internal type of a platform core island **/
 
 			/** Constructor **/
@@ -80,7 +93,7 @@ namespace pelib
 				@param voltage Voltage scaling islands
 				@param freq Frequency scaling islands
 			**/
-			Platform(const island& cores, const islands &shared, const islands &main, const islands &priv, const islands &voltage, const islands &freq);
+			Platform(const island& cores, const islands &shared, const islands &main, const islands &priv, const islands &voltage, const islands &freq, const std::map<std::pair<island, unsigned int>, Core::MemorySize> &sm, const std::map<unsigned int, Core::MemorySize> &dm);
 
 			/** Copy constructor **/
 			Platform(const Platform *arch);
@@ -117,13 +130,13 @@ namespace pelib
 			**/
 			virtual const std::set<unsigned int> sharedMemoryIslands(const islands& isls) const;
 			/** Returns all main memory islands **/
-			virtual const islands& getMainMemoryIslands() const;
+			//virtual const islands& getMainMemoryIslands() const;
 			/** Returns the main memory island corresponding to the core_id-th core of the platform, starting with 1 **/
-			virtual const islands mainMemoryIslands(size_t core_id) const;
+			//virtual const islands mainMemoryIslands(size_t core_id) const;
 			/** Returns all private memory islands **/
-			virtual const islands& getPrivateMemoryIslands() const;
+			//virtual const islands& getPrivateMemoryIslands() const;
 			/** Returns the private memory island corresponding to the core_id-th core of the platform, starting with 1 **/
-			virtual const islands privateMemoryIslands(size_t core_id) const;
+			//virtual const islands privateMemoryIslands(size_t core_id) const;
 			/** Returns all voltage memory islands **/
 			virtual const islands& getVoltageIslands() const;
 			/** Returns the voltage memory island corresponding to the core_id-th core of the platform, starting with 1 **/
@@ -139,6 +152,12 @@ namespace pelib
 			/** Builds an algebraic representation of this platform: p is the number of cores and F is the set of frequency they can run at **/
 			virtual Algebra buildAlgebra() const;
 
+			const std::map<std::pair<island, unsigned int>, Core::MemorySize>&
+			getSharedMemories() const;
+
+			const std::map<unsigned int, Core::MemorySize>&
+			getDistributedMemories() const;
+
 			/** Destructor **/
 			virtual	~Platform();
 			virtual Platform&
@@ -147,11 +166,13 @@ namespace pelib
 			/** Collection of cores **/
 			island cores;
 			/** Islands **/
-			islands shared, main, priv, voltage, freq;
-			std::map<std::pair<island, unsigned int>, size_t> shared_memory_size; // (island,level) -> size for shared memory
-			std::map<unsigned int, size_t> distributed_memory_size; // level -> size for distributed memory
+			//islands shared, main, priv, voltage, freq; // Why are private and main memory islands necessary?
+			islands shared, voltage, freq;
+			std::map<std::pair<island, unsigned int>, Core::MemorySize> sharedMemorySize; // (island,level) -> size for shared memory
+			std::map<unsigned int, Core::MemorySize> distributedMemorySize; // level -> size for distributed memory
 		private:		
 			void copy(const Platform *pt);
+			static std::map<std::string, const std::type_info&> amplDirectives;
 	};
 }
 

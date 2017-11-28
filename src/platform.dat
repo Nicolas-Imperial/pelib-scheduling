@@ -18,14 +18,54 @@
 
 
 # Number of cores
-param p := 8;
+param p := 4;
 
 # Frequency levels
 set F := 1 2 3 4 5;
 param Funit := 1000000;
 
-param Fin := 1;
-set Fi[1] := 1 2 3 4 5 6 7 8;
+param Fin := 2;
+set Fi[1] := 1 4;
+set Fi[2] := 2 3;
 
-param Sin := 1;
-set Si[1] := 1 2 3 4 5 6 7 8;
+param Sin := 2;
+set Si[1] := 1 2;
+set Si[2] := 3 4;
+
+## Number of levels for cores's private memory
+param: pml :=
+1 2
+2 2
+3 1
+4 2
+;
+
+## Number of levels for shared memory islands
+param: sml :=
+1 2
+2 1
+;
+
+## Number of levels for distributed memory
+param dml := 0;
+
+## Private memories: L1 and L2 caches: 64K and 512K
+param pms:
+  1     2      :=
+1 65536 524288
+2 65536 524288
+3 65536 0
+4 65536 524288
+;
+
+## Shared memories: L3 cache and RAM: 1M and 8G
+param sms:
+  1       2	:=
+1 1048576 8589934592
+2 1048576 0
+;
+
+## Distributed memories: none
+param: dms :=
+;
+

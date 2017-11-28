@@ -63,7 +63,7 @@ DeadlineFormula::calculate(const Taskgraph &tg, const Platform &arch) const
 		p.push_back(i);
 	}
 
-	for(set<float>::const_iterator i = (*(arch.getCores().begin()))->getFrequencies().begin(); i != (*(arch.getCores().begin()))->getFrequencies().end(); i++)
+	for(set<unsigned int>::const_iterator i = (*(arch.getCores().begin()))->getFrequencies().begin(); i != (*(arch.getCores().begin()))->getFrequencies().end(); i++)
 	{
 		F.push_back(*i);
 	}

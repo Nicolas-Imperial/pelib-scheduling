@@ -42,9 +42,9 @@ extern "C" {
 pelib::Record*
 pelib_parse(std::istream& cin, size_t argc, char **argv, const map<string, Record*> &input)
 {
-	AmplInput reader(AmplInput::floatHandlers());
+	AmplInput reader(Platform::AmplInputHandlers());
 	std::string line;
-	Algebra alg_arch = reader.parse(cin);
+	Algebra alg_arch = reader.parse(cin, Platform::getAmplParsingDirectives());
 
 	Platform *arch = new Platform(alg_arch);
 
@@ -57,7 +57,7 @@ pelib_dump(std::ostream& cout, const std::map<string, Record*> &records, size_t 
 {
 	const Platform *arch = (Platform*)records.find(typeid(Platform).name())->second;
 
-	AmplInput output(AmplInput::intFloatHandlers());
+	AmplInput output(Platform::AmplInputHandlers());
 	Algebra alg = arch->buildAlgebra();
 	output.dump(cout, alg);
 }

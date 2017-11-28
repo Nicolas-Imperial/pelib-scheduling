@@ -24,21 +24,21 @@ using namespace std;
 
 namespace pelib
 {
-	DummyCore::DummyCore(const set<float> &f, float unit): Core()
+	DummyCore::DummyCore(const std::set<unsigned int> &f, float unit, const std::map<unsigned int, Core::MemorySize> &pm) : Core(pm)
 	{
-		this->frequencies = set<float>(f);
+		this->frequencies = set<unsigned int>(f);
 		this->frequencyUnit = unit;
 	}
 
-	DummyCore::DummyCore(const DummyCore* src): Core()
+	DummyCore::DummyCore(const DummyCore* src): Core(src->getPrivateMemories())
 	{
-		this->frequencies = set<float>(src->getFrequencies());
+		this->frequencies = set<unsigned int>(src->getFrequencies());
 		this->frequencyUnit = src->getFrequencyUnit();
 	}
 
-	DummyCore::DummyCore(const DummyCore &src): Core()
+	DummyCore::DummyCore(const DummyCore &src): Core(src.getPrivateMemories())
 	{
-		this->frequencies = set<float>(src.getFrequencies());
+		this->frequencies = set<unsigned int>(src.getFrequencies());
 		this->frequencyUnit = src.getFrequencyUnit();
 	}
 
@@ -53,13 +53,13 @@ namespace pelib
 		return new DummyCore(this);
 	}
 
-	const set<float>&
+	const set<unsigned int>&
 	DummyCore::getFrequencies() const
 	{
 		return this->frequencies;
 	}
 
-	float
+	unsigned int
 	DummyCore::getFrequencyUnit() const
 	{
 		return this->frequencyUnit;

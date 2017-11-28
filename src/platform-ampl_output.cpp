@@ -43,26 +43,11 @@ extern "C" {
 pelib::Record*
 pelib_parse(std::istream& cin, size_t argc, char **argv, const map<string, Record*> &input)
 {
-	AmplOutput reader(AmplOutput::floatHandlers());
+	AmplOutput reader(Platform::AmplOutputHandlers());
 	std::string line;
-	Algebra alg_arch = reader.parse(cin);
+	Algebra alg_arch = reader.parse(cin, Platform::getAmplParsingDirectives());
 
-	const Scalar<float> *scalar_p = alg_arch.find<Scalar<float> >("p");
-	const Scalar<float> *f_unit = alg_arch.find<Scalar<float> >("Funit");
-	const Set<float> *set_F = alg_arch.find<Set<float> >("F");
-
-	if(scalar_p == NULL || set_F == NULL)
-	{
-		throw ParseException(std::string("Missing core number scalar \"p\" or frequency set \"F\" in input."));
-	}
-
-	set<const Core*, Core::LessCorePtrByCoreId> cores;
-	for(size_t i = 0; i < (size_t)scalar_p->getValue(); i++)
-	{
-		cores.insert(new DummyCore(set_F->getValues(), f_unit->getValue()));
-	}
-
-	Platform *arch = new Platform(cores);
+	Platform *arch = new Platform(alg_arch);
 	
 	return arch;
 }
@@ -73,7 +58,7 @@ pelib_dump(std::ostream& cout, const std::map<string, Record*> &records, size_t 
 {
 	const Platform *arch = (Platform*)records.find(typeid(Platform).name())->second;
 
-	AmplOutput output(AmplOutput::intFloatHandlers());
+	AmplOutput output(Platform::AmplOutputHandlers());
 	Algebra alg = arch->buildAlgebra();
 	output.dump(cout, alg);
 }
