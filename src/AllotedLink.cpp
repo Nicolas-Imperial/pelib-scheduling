@@ -85,6 +85,6 @@ namespace pelib
 	bool
 	AllotedLink::operator==(const AllotedLink &other) const
 	{	
-		return this->getLink() == other.getLink() && this->getQueueBuffer() == other.getQueueBuffer() && this->getProducerMemory() == other.getProducerMemory() && this->getConsumerMemory() == other.getConsumerMemory();
+		return this->getLink() == other.getLink(); // && this->getQueueBuffer() == other.getQueueBuffer() && this->getProducerMemory() == other.getProducerMemory() && this->getConsumerMemory() == other.getConsumerMemory();
 	}
 }

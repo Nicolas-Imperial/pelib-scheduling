@@ -20,6 +20,7 @@
 
 #include <set>
 
+#include <pelib/ScheduleLinkAllocator.hpp>
 #include <pelib/Algebra.hpp>
 #include <pelib/AbstractLink.hpp>
 #include <pelib/AbstractLink.hpp>
@@ -99,6 +100,9 @@ namespace pelib
 			virtual const Task&
 			getTask(int id) const;
 
+			virtual const ExecTask&
+			getExecTask(const Task &task) const;
+
 			virtual const set<ExecTask>&
 			getTasks(unsigned int core) const;
 
@@ -118,6 +122,24 @@ namespace pelib
 			virtual set<const Task*>
 			tasksSharedMemoryIsland(const set<unsigned int>& islands) const;
 
+			/** Returns the tasks whose cores executing it are all contained in the island requested
+				@param island Set of cores that execute all tasks begin explored
+			**/
+			/*
+			virtual set<const ExecTask*>
+			execTasksIsland(const Platform::island &island) const;
+
+			virtual set<const Task*>
+			tasksIsland(const Platform::island &island) const;
+			*/
+
+			/**
+				Returns the set of cores used to run this task
+				@param task Task whose set of executing cores is requested
+				@return Set of pointers to cores that collectivelly run this task according to schedule
+			**/
+			virtual Platform::island
+			taskIsland(const Task &task) const;
 			/** Returns the set of Task that are mapped to other shared memory islands than the island collection given as parameter, and produce data consumed by tasks mapped in the set of islands given as parameters
 				@param islands Set of islands
 				@param tg Taskgraph that describe links between tasks
@@ -164,8 +186,9 @@ namespace pelib
 			static
 			Algebra
 			addStartTime(const Algebra &data, const Taskgraph &tg, const Platform &platform);
+
 			void
-			allocateLinks(const Schedule &schedule);
+			allocateLinks(const pelib::ScheduleLinkAllocator &alloc);
 
 		protected:
 			std::string name, appName;

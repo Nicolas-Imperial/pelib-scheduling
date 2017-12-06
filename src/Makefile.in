@@ -72,20 +72,21 @@ Platform.cpp \
 AbstractLink.cpp AllotedLink.cpp Buffer.cpp Memory.cpp ExecTask.cpp TaskSync.cpp \
 Schedule.cpp \
 XMLSchedule.cpp TetrisSchedule.cpp \
+ScheduleLinkAllocator.cpp UniformLinkAllocator.cpp \
 schedule-parse.cpp 
 
 ## executables
 bincxx_package = 
 
 ## dynamic library packages and their sources
-corepp = pelib-scheduling pelib-platform-ampl_input pelib-platform-ampl_output pelib-taskgraph-graphml pelib-taskgraph-streamit pelib-taskgraph-ampl_input pelib-taskgraph-ampl_output pelib-schedule-xml pelib-schedule-tetris pelib-schedule-ampl_input pelib-schedule-ampl_output pelib-schedule pelib-generate pelib-schedule-manual pelib-schedule-copy pelib-schedule-merge pelib-taskgraph-split
+corepp = pelib-scheduling pelib-platform-ampl_input pelib-platform-ampl_output pelib-taskgraph-graphml pelib-taskgraph-streamit pelib-taskgraph-ampl_input pelib-taskgraph-ampl_output pelib-schedule-xml pelib-schedule-tetris pelib-schedule-ampl_input pelib-schedule-ampl_output pelib-schedule pelib-generate pelib-schedule-manual pelib-schedule-copy pelib-schedule-merge pelib-taskgraph-split pelib-link-uniform
 sharedcxx_package = $(if $(filter 1,$(CORE++_SHARED)),$(corepp))
 sharedcc_package =
 
 sharedcxx_pelib-scheduling_src = $(corepp_src)
 sharedcc_pelib-scheduling_src = $(if $(filter core,$(corepp_extra)),$(core_src))
 shared_pelib-scheduling_export = $(sharedcxx_pelib-scheduling_embed) $(sharedcxx_pelib-scheduling_src) $(sharedcc_pelib-scheduling_src)
-shared_pelib-scheduling_libs = 
+shared_pelib-scheduling_libs = -ltcc 
 shared_pelib-scheduling_ldflags = -pthread
 shared_pelib-scheduling_cxxflags = -fPIC -std=c++11
 shared_pelib-scheduling_deps = 
@@ -125,6 +126,19 @@ shared_pelib-platform-ampl_output_pkg_libs =
 shared_pelib-platform-ampl_output_cxxflags = -fPIC
 shared_pelib-platform-ampl_output_pkg_description = Platform parser and output in AMPL output format
 shared_pelib-platform-ampl_output_embed =
+
+sharedcxx_pelib-link-uniform_src = link-uniform.cpp
+shared_pelib-link-uniform_export = $(sharedcxx_pelib-link-uniform_embed) $(sharedcxx_pelib-link-uniform_src)
+shared_pelib-link-uniform_libs = -lpelib-scheduling
+shared_pelib-link-uniform_ldflags = -L.
+shared_pelib-link-uniform_deps = libpelib-scheduling.so
+shared_pelib-link-uniform_pkg_requires = 
+shared_pelib-link-uniform_pkg_url = http://www.ida.liu.se/~nicme26
+shared_pelib-link-uniform_pkg_ld =
+shared_pelib-link-uniform_pkg_libs =
+shared_pelib-link-uniform_cxxflags = -fPIC
+shared_pelib-link-uniform_pkg_description = Platform parser and output in AMPL input format
+shared_pelib-link-uniform_embed =
 
 sharedcxx_pelib-taskgraph-graphml_src = taskgraph-graphml.cpp
 shared_pelib-taskgraph-graphml_export = $(sharedcxx_pelib-taskgraph-graphml_embed) $(sharedcxx_pelib-taskgraph-graphml_src)

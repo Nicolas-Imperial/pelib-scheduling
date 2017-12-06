@@ -58,7 +58,7 @@ namespace pelib
 			getConsumerMemory() const;
 
 		protected:
-			const AbstractLink &link;
+			const AbstractLink link;
 			Buffer queueBuffer;
 			Memory producerMemory, consumerMemory;
 

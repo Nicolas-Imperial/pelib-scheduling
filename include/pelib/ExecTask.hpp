@@ -24,6 +24,7 @@
 #include <pelib/Task.hpp>
 #include <pelib/Memory.hpp>
 #include <pelib/AllotedLink.hpp>
+#include <pelib/Platform.hpp>
 
 #ifndef PELIB_EXECTASK
 #define PELIB_EXECTASK
@@ -33,6 +34,7 @@ namespace pelib
 	// Forward declaration
 	/** Forward declaration of a link between tasks **/
 	class AbstractLink;
+	class Schedule;
 
 	/** Models a moldable task of a streaming application **/
 	class ExecTask
@@ -92,6 +94,9 @@ namespace pelib
 
 			unsigned int
 			getMasterCore() const;
+
+			Platform::island
+			runIsland(const Schedule &schedule) const;
 
 		protected:
 			void importLinks(const std::set<AllotedLink> &links);

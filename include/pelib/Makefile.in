@@ -32,6 +32,8 @@ PlatformParser.hpp PlatformOutput.hpp \
 AbstractLink.hpp AllotedLink.hpp Buffer.hpp Memory.hpp ExecTask.hpp TaskSync.hpp \
 Schedule.hpp \
 ScheduleParser.hpp ScheduleOutput.hpp \
+ScheduleLinkAllocator.hpp \
+UniformLinkAllocator.hpp \
 XMLScheduleParser.hpp XMLScheduleOutput.hpp \
 XMLSchedule.hpp \
 TetrisSchedule.hpp \

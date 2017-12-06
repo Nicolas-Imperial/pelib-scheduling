@@ -55,6 +55,93 @@ namespace pelib
 		//priv.insert(island(isl));
 		voltage.insert(island(isl));
 		freq.insert(island(isl));
+		syncSize = 0;
+		pmcpbs = 0;
+		pmccbs = 0;
+		smcppbs = 0;
+		smcpsbs = 0;
+		smccpbs = 0;
+		smccsbs = 0;
+		dmcppbs = 0;
+		dmcpdbs = 0;
+		dmccpbs = 0;
+		dmccdbs = 0;
+	}
+
+	const Core::MemorySize&
+	Platform::getSyncSize() const
+	{
+		return this->syncSize;
+	}
+
+	/** Memory size in bytes necessary on the producer side of a channel alloted in private memory **/
+	const Core::MemorySize&
+	Platform::getPrivMemChanProdBuffSize() const
+	{
+		return pmcpbs;
+	}
+
+	/** Memory size in bytes necessary on the consumer side of a channel alloted in private memory **/
+	const Core::MemorySize&
+	Platform::getPrivMemChanConsBuffSize() const
+	{
+		return pmccbs;
+	}
+
+	/** Private Memory size in bytes necessary on the producer side of a channel alloted in shared memory **/
+	const Core::MemorySize&
+	Platform::getSharedMemChanProdPrivBuffSize() const
+	{
+		return smcppbs;
+	}
+
+	/** Shared Memory size in bytes necessary on the producer side of a channel alloted in shared memory **/
+	const Core::MemorySize&
+	Platform::getSharedMemChanProdSharedBuffSize() const
+	{
+		return smcpsbs;
+	}
+
+	/** Private Memory size in bytes necessary on the consumer side of a channel alloted in shared memory **/
+	const Core::MemorySize&
+	Platform::getSharedMemChanConsPrivBuffSize() const
+	{
+		return smccpbs;
+	}
+
+	/** Shared Memory size in bytes necessary on the consumer side of a channel alloted in shared memory **/
+	const Core::MemorySize&
+	Platform::getSharedMemChanConsSharedBuffSize() const
+	{
+		return smccsbs;
+	}
+
+	/** Private Memory size in bytes necessary on the producer side of a channel alloted in distributed memory **/
+	const Core::MemorySize&
+	Platform::getDistMemChanProdPrivBuffSize() const
+	{
+		return dmcppbs;
+	}
+
+	/** Distributed Memory size in bytes necessary on the producer side of a channel alloted in distributed memory **/
+	const Core::MemorySize&
+	Platform::getDistMemChanProdDistBuffSize() const
+	{
+		return dmcpdbs;
+	}
+
+	/** Private Memory size in bytes necessary on the consumer side of a channel alloted in distributed memory **/
+	const Core::MemorySize&
+	Platform::getDistMemChanConsPrivBuffSize() const
+	{
+		return dmccpbs;
+	}
+
+	/** Distributed Memory size in bytes necessary on the consumer side of a channel alloted in distributed memory **/
+	const Core::MemorySize&
+	Platform::getDistMemChanConsDistBuffSize() const
+	{
+		return dmccdbs;
 	}
 
 	Platform::Platform(const island &cores)
@@ -63,9 +150,10 @@ namespace pelib
 		for(set<const Core*>::const_iterator i = cores.begin(); i != cores.end(); i++)
 		{
 			Core *core = (*i)->clone();
-			this->cores.insert(core);
+			pair<set<const Core*>::const_iterator, bool> res = this->cores.insert(core);
+			
 			island isl;
-			isl.insert(core);
+			isl.insert(*res.first);
 			//shared.insert(core);
 
 			// Each core is its own Platform::island of anything
@@ -75,19 +163,82 @@ namespace pelib
 			this->voltage.insert(island(isl));
 			this->freq.insert(island(isl));
 		}
-		//this->shared.insert(set<const Core*>(shared));
+		syncSize = 0;
+		pmcpbs = 0;
+		pmccbs = 0;
+		smcppbs = 0;
+		smcpsbs = 0;
+		smccpbs = 0;
+		smccsbs = 0;
+		dmcppbs = 0;
+		dmcpdbs = 0;
+		dmccpbs = 0;
+		dmccdbs = 0;
 	}
 	
-	Platform::Platform(const island& cores, const islands &shared, const islands &main, const islands &priv, const islands &voltage, const islands &freq, const std::map<pair<island, unsigned int>, Core::MemorySize> &sm, const std::map<unsigned int, Core::MemorySize> &dm)
+	static
+	Platform::island
+	buildIsland(const Platform::island &inRef, const Platform::island &ref, const Platform::island src)
 	{
-		this->cores = cores;
-		this->shared = shared;
-		//this->main = main;
-		//this->priv = priv;
-		this->voltage = voltage;
-		this->freq = freq;
-		this->sharedMemorySize = sm;
+		Platform::island out;
+		for(const Core *core: src)
+		{
+			Platform::island::const_iterator search_core = ref.find(core);
+			if(ref.find(core) == ref.end())
+			{
+				throw PelibException("Trying to insert an island composed of cores not part of platform"); 
+			}
+			size_t id = std::distance(ref.begin(), search_core);
+			Platform::island::const_iterator c = inRef.begin();
+			std::advance(c, id);
+			out.insert(*c);
+		}
+
+		return out;
+	}
+	static
+	Platform::islands
+	buildIslands(const Platform::island &inRef, const Platform::island &ref, const Platform::islands src)
+	{
+		Platform::islands out;
+		for(const Platform::island &isl: src)
+		{
+			out.insert(buildIsland(inRef, ref, isl));
+		}
+	
+		return out;	
+	}
+
+	Platform::Platform(const island& cores, const islands &shared, const islands &main, const islands &priv, const islands &voltage, const islands &freq, const std::map<std::pair<island, unsigned int>, Core::MemorySize> &sm, const std::map<unsigned int, Core::MemorySize> &dm, const Core::MemorySize &syncSize, const Core::MemorySize &pmcpbs, const Core::MemorySize &pmccbs, const Core::MemorySize &smcppbs, const Core::MemorySize &smcpsbs, const Core::MemorySize &smccpbs, const Core::MemorySize &smccsbs, const Core::MemorySize &dmcppbs, const Core::MemorySize &dmcpdbs, const Core::MemorySize &dmccpbs, const Core::MemorySize &dmccdbs)
+	{
+		this->cores.clear();
+		for(const Core *core: cores)
+		{
+			this->cores.insert(core->clone());
+		}
+		this->shared = buildIslands(this->cores, cores, shared);
+		this->voltage = buildIslands(this->cores, cores, voltage);
+		this->freq = buildIslands(this->cores, cores, freq);
+
+		for(const pair<pair<Platform::island, unsigned int>, Core::MemorySize> &i: sm)
+		{
+			Platform::island isl = buildIsland(this->cores, cores, i.first.first);
+			unsigned int level = i.first.second;
+
+			this->sharedMemorySize.insert(pair<pair<Platform::island, unsigned int>, Core::MemorySize>(pair<Platform::island, unsigned int>(isl, level), i.second));
+		}
 		this->distributedMemorySize = dm;
+		this->syncSize = syncSize;
+		this->pmcpbs = pmcpbs;
+		this->pmccbs = pmccbs;
+		this->smcppbs = smcppbs;
+		this->smcpsbs = smcpsbs;
+		this->smccpbs = smccpbs;
+		this->smccsbs = smccsbs;
+		this->dmcppbs = dmcppbs;
+		this->dmcpdbs = dmcpdbs;
+		this->dmccpbs = dmccpbs;
+		this->dmccdbs = dmccdbs;
 	}
 
 	Platform::Platform(size_t p, const Core* ref)
@@ -109,11 +260,54 @@ namespace pelib
 			this->freq.insert(island(isl));
 		}
 		//this->shared.insert(shared);
+		this->syncSize = 0;
+		pmcpbs = 0;
+		pmccbs = 0;
+		smcppbs = 0;
+		smcpsbs = 0;
+		smccpbs = 0;
+		smccsbs = 0;
+		dmcppbs = 0;
+		dmcpdbs = 0;
+		dmccpbs = 0;
+		dmccdbs = 0;
 	}
 
 	void
 	Platform::copy(const Platform *arch)
 	{
+		this->syncSize = arch->getSyncSize();
+		this->pmcpbs = arch->getPrivMemChanProdBuffSize();
+		this->pmccbs = arch->getPrivMemChanConsBuffSize();
+		this->smcppbs = arch->getSharedMemChanProdPrivBuffSize();
+		this->smcpsbs = arch->getSharedMemChanProdSharedBuffSize();
+		this->smccpbs = arch->getSharedMemChanConsPrivBuffSize();
+		this->smccsbs = arch->getSharedMemChanConsSharedBuffSize();
+		this->dmcppbs = arch->getDistMemChanProdPrivBuffSize();
+		this->dmcpdbs = arch->getDistMemChanProdDistBuffSize();
+		this->dmccpbs = arch->getDistMemChanConsPrivBuffSize();
+		this->dmccdbs = arch->getDistMemChanConsDistBuffSize();
+
+		this->cores.clear();
+		for(const Core *core: arch->getCores())
+		{
+			this->cores.insert(core->clone());
+		}
+		this->shared = buildIslands(this->cores, arch->getCores(), arch->getSharedMemoryIslands());
+		this->voltage = buildIslands(this->cores, arch->getCores(), arch->getVoltageIslands());
+		this->freq = buildIslands(this->cores, arch->getCores(), arch->getFrequencyIslands());
+
+		for(const pair<pair<Platform::island, unsigned int>, Core::MemorySize> &i: arch->getSharedMemories())
+		{
+			Platform::island isl = buildIsland(this->cores, arch->getCores(), i.first.first);
+			unsigned int level = i.first.second;
+
+			this->sharedMemorySize.insert(pair<pair<Platform::island, unsigned int>, Core::MemorySize>(pair<Platform::island, unsigned int>(isl, level), i.second));
+		}
+		this->distributedMemorySize = arch->getDistributedMemories();
+
+
+#if 0
 		Platform::island stuff = arch->getCores();
 		this->cores.clear();
 		for(island::const_iterator i = arch->getCores().begin(); i != arch->getCores().end(); i++)
@@ -202,6 +396,7 @@ namespace pelib
 
 		this->sharedMemorySize = arch->sharedMemorySize;
 		this->distributedMemorySize = arch->distributedMemorySize;
+#endif
 	}
 
 	Platform::Platform(const Platform *arch)
@@ -220,6 +415,17 @@ namespace pelib
 	{
 		std::map<std::string, const std::type_info&> new_map;
 		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("p"), typeid(Scalar<unsigned int>)));
+		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("sync"), typeid(Scalar<unsigned long int>)));
+		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("pmcpbs"), typeid(Scalar<unsigned long int>)));
+		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("pmccbs"), typeid(Scalar<unsigned long int>)));
+		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("smcppbs"), typeid(Scalar<unsigned long int>)));
+		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("smcpsbs"), typeid(Scalar<unsigned long int>)));
+		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("smccpbs"), typeid(Scalar<unsigned long int>)));
+		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("smccsbs"), typeid(Scalar<unsigned long int>)));
+		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("dmcppbs"), typeid(Scalar<unsigned long int>)));
+		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("dmcpdbs"), typeid(Scalar<unsigned long int>)));
+		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("dmccpbs"), typeid(Scalar<unsigned long int>)));
+		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("dmccdbs"), typeid(Scalar<unsigned long int>)));
 		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("Fin"), typeid(Scalar<unsigned int>)));
 		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("Funit"), typeid(Scalar<unsigned int>)));
 		new_map.insert(std::pair<std::string, const std::type_info&>(std::string("F"), typeid(Set<unsigned int>)));
@@ -237,6 +443,17 @@ namespace pelib
 	Platform::Platform(const Algebra &arch)
 	{
 		const Scalar<unsigned int> *scalar_p = arch.find<Scalar<unsigned int> >("p");
+		const Scalar<unsigned long int> *scalar_sync = arch.find<Scalar<unsigned long int> >("sync");
+		const Scalar<unsigned long int> *scalar_pmcpbs = arch.find<Scalar<unsigned long int> >("pmcpbs");
+		const Scalar<unsigned long int> *scalar_pmccbs = arch.find<Scalar<unsigned long int> >("pmccbs");
+		const Scalar<unsigned long int> *scalar_smcppbs = arch.find<Scalar<unsigned long int> >("smcppbs");
+		const Scalar<unsigned long int> *scalar_smcpsbs = arch.find<Scalar<unsigned long int> >("smcpsbs");
+		const Scalar<unsigned long int> *scalar_smccpbs = arch.find<Scalar<unsigned long int> >("smccpbs");
+		const Scalar<unsigned long int> *scalar_smccsbs = arch.find<Scalar<unsigned long int> >("smccsbs");
+		const Scalar<unsigned long int> *scalar_dmcppbs = arch.find<Scalar<unsigned long int> >("dmcppbs");
+		const Scalar<unsigned long int> *scalar_dmcpdbs = arch.find<Scalar<unsigned long int> >("dmcpdbs");
+		const Scalar<unsigned long int> *scalar_dmccpbs = arch.find<Scalar<unsigned long int> >("dmccpbs");
+		const Scalar<unsigned long int> *scalar_dmccdbs = arch.find<Scalar<unsigned long int> >("dmccdbs");
 		const Scalar<unsigned int> *scalar_fin = arch.find<Scalar<unsigned int> >("Fin");
 		//const Scalar<float> *scalar_sin = arch.find<Scalar<float> >("Sin");
 		const Scalar<unsigned int> *f_unit = arch.find<Scalar<unsigned int> >("Funit");
@@ -253,6 +470,50 @@ namespace pelib
 		if(scalar_p == NULL)
 		{
 			throw PelibException("Missing number of cores (scalar \"p\").");
+		}
+		if(scalar_sync == NULL)
+		{
+			throw PelibException("Missing synchronization size (scalar \"sync\").");
+		}
+		if(scalar_pmcpbs == NULL)
+		{
+			throw PelibException("Missing private memory channel producer buffer size (scalar \"pmcpbs\").");
+		}
+		if(scalar_pmccbs == NULL)
+		{
+			throw PelibException("Missing private memory channel consumer buffer size (scalar \"pmccbs\").");
+		}
+		if(scalar_smcppbs == NULL)
+		{
+			throw PelibException("Missing shared memory channel producer private buffer size (scalar \"smcppbs\").");
+		}
+		if(scalar_smcpsbs == NULL)
+		{
+			throw PelibException("Missing shared memory channel producer shared buffer size (scalar \"smcpsbs\").");
+		}
+		if(scalar_smccpbs == NULL)
+		{
+			throw PelibException("Missing shared memory channel consumer private buffer size (scalar \"smccpbs\").");
+		}
+		if(scalar_smccsbs == NULL)
+		{
+			throw PelibException("Missing shared memory channel consumer shared buffer size (scalar \"smccsbs\").");
+		}
+		if(scalar_dmcppbs == NULL)
+		{
+			throw PelibException("Missing distributed memory channel producer private buffer size (scalar \"smcppbs\").");
+		}
+		if(scalar_dmcpdbs == NULL)
+		{
+			throw PelibException("Missing distributed memory channel producer distributed buffer size (scalar \"smcpdbs\").");
+		}
+		if(scalar_dmccpbs == NULL)
+		{
+			throw PelibException("Missing distributed memory channel consumer private buffer size (scalar \"smccpbs\").");
+		}
+		if(scalar_dmccdbs == NULL)
+		{
+			throw PelibException("Missing distributed memory channel consumer distributed buffer size (scalar \"smcppbs\").");
 		}
 		if(set_F == NULL)
 		{
@@ -299,6 +560,18 @@ namespace pelib
                         throw PelibException("Missing size of distributed memories per distributed level (vector \"dms\").");
 		}
 
+		this->syncSize = scalar_sync->getValue();
+		this->pmcpbs = scalar_pmcpbs->getValue();
+		this->pmccbs = scalar_pmccbs->getValue();
+		this->smcppbs = scalar_smcppbs->getValue();
+		this->smcpsbs = scalar_smcpsbs->getValue();
+		this->smccpbs = scalar_smccpbs->getValue();
+		this->smccsbs = scalar_smccsbs->getValue();
+		this->dmcppbs = scalar_dmcppbs->getValue();
+		this->dmcpdbs = scalar_dmcpdbs->getValue();
+		this->dmccpbs = scalar_dmccpbs->getValue();
+		this->dmccdbs = scalar_dmccdbs->getValue();
+
 		// Create empty frequency islands, if a description is given
 		vector<island> frequency;
 		if(set_Fi != NULL)
@@ -312,11 +585,11 @@ namespace pelib
 
 		// Create empty shared memory islands, if a description is given
 		vector<island> shared;
-			Set<unsigned int>::SetOfSetsType Si = set_Si->getSubsets();
-			for(Set<unsigned int>::SetOfSetsType::iterator i = Si.begin(); i != Si.end(); i++)
-			{
-				shared.push_back(island());
-			}
+		Set<unsigned int>::SetOfSetsType Si = set_Si->getSubsets();
+		for(Set<unsigned int>::SetOfSetsType::iterator i = Si.begin(); i != Si.end(); i++)
+		{
+			shared.push_back(island());
+		}
 
 		for(size_t i = 0; i < scalar_p->getValue(); i++)
 		{
@@ -375,23 +648,22 @@ namespace pelib
 			}
 
 			// If shared memory islands are provided, then insert core in the right island
-				size_t core_id = i + 1;
-				vector<Platform::island>::iterator jj = shared.begin();
+			size_t core_id = i + 1;
+			vector<Platform::island>::iterator jj = shared.begin();
 
-				// Find the shared memory island that holds this core
-				Set<unsigned int>::SetOfSetsType Si = set_Si->getSubsets();
-				for(Set<unsigned int>::SetOfSetsType::iterator j = Si.begin(); j != Si.end(); j++)
+			// Find the shared memory island that holds this core
+			Set<unsigned int>::SetOfSetsType Si = set_Si->getSubsets();
+			for(Set<unsigned int>::SetOfSetsType::iterator j = Si.begin(); j != Si.end(); j++)
+			{
+				if(j->second.find(core_id) != j->second.end())
 				{
-					if(j->second.find(core_id) != j->second.end())
-					{
-						size_t island_id = std::distance(Si.begin(), j);
-						std::advance(jj, island_id);
-						island isl = *jj;
-						shared[island_id].insert(core);
-
-						break;
-					}
+					size_t island_id = std::distance(Si.begin(), j);
+					std::advance(jj, island_id);
+					island isl = *jj;
+					shared[island_id].insert(core);
+					break;
 				}
+			}
 
 			// If voltage/frequency islands are provided, then copy the
 			// frequency island set computed above to voltage and frequency
@@ -640,6 +912,28 @@ namespace pelib
 		record.insert(&scalar_Fin);
 		Scalar<unsigned int> scalar_Sin("Sin", Si.size());
 		record.insert(&scalar_Sin);
+		Scalar<unsigned long int> scalar_sync("sync", this->getSyncSize());
+		record.insert(&scalar_sync);
+		Scalar<unsigned long int> scalar_pmcpbs("pmcpbs", this->getPrivMemChanProdBuffSize());
+		record.insert(&scalar_pmcpbs);
+		Scalar<unsigned long int> scalar_pmccbs("pmccbs", this->getPrivMemChanConsBuffSize());
+		record.insert(&scalar_pmccbs);
+		Scalar<unsigned long int> scalar_smcppbs("smcppbs", this->getSharedMemChanProdPrivBuffSize());
+		record.insert(&scalar_smcppbs);
+		Scalar<unsigned long int> scalar_smcpsbs("smcpsbs", this->getSharedMemChanProdSharedBuffSize());
+		record.insert(&scalar_smcpsbs);
+		Scalar<unsigned long int> scalar_smccpbs("smccpbs", this->getSharedMemChanConsPrivBuffSize());
+		record.insert(&scalar_smccpbs);
+		Scalar<unsigned long int> scalar_smccsbs("smccsbs", this->getSharedMemChanConsSharedBuffSize());
+		record.insert(&scalar_smccsbs);
+		Scalar<unsigned long int> scalar_dmcppbs("dmcppbs", this->getDistMemChanProdPrivBuffSize());
+		record.insert(&scalar_dmcppbs);
+		Scalar<unsigned long int> scalar_dmcpdbs("dmcpdbs", this->getDistMemChanProdDistBuffSize());
+		record.insert(&scalar_dmcpdbs);
+		Scalar<unsigned long int> scalar_dmccpbs("dmccpbs", this->getDistMemChanConsPrivBuffSize());
+		record.insert(&scalar_dmccpbs);
+		Scalar<unsigned long int> scalar_dmccdbs("dmccdbs", this->getDistMemChanConsDistBuffSize());
+		record.insert(&scalar_dmccdbs);
 
 		return record;
 	}
@@ -845,6 +1139,7 @@ namespace pelib
 		std::vector<AmplInputDataParser*> parsers;
 		
 		parsers.push_back(new AmplInputScalar<unsigned int>(false));
+		parsers.push_back(new AmplInputScalar<unsigned long int>(false));
 		parsers.push_back(new AmplInputVector<unsigned int, unsigned int>(true));
 		parsers.push_back(new AmplInputVector<unsigned int, unsigned long int>(true));
 		parsers.push_back(new AmplInputSet<unsigned int>(true));
@@ -858,6 +1153,7 @@ namespace pelib
 		std::vector<AmplInputDataOutput*> outputs;
 
 		outputs.push_back(new AmplInputScalar<unsigned int>(false));
+		outputs.push_back(new AmplInputScalar<unsigned long int>(false));
 		outputs.push_back(new AmplInputVector<unsigned int, unsigned int>(true));
 		outputs.push_back(new AmplInputVector<unsigned int, unsigned long int>(true));
 		outputs.push_back(new AmplInputSet<unsigned int>(true));
@@ -875,6 +1171,7 @@ namespace pelib
 		std::vector<AmplOutputDataParser*> parsers;
 		
 		parsers.push_back(new AmplOutputScalar<unsigned int>(false));
+		parsers.push_back(new AmplOutputScalar<unsigned long int>(false));
 		parsers.push_back(new AmplOutputVector<unsigned int, unsigned int>(true));
 		parsers.push_back(new AmplOutputVector<unsigned int, unsigned long int>(true));
 		parsers.push_back(new AmplOutputSet<unsigned int>(true));
@@ -888,6 +1185,7 @@ namespace pelib
 		std::vector<AmplOutputDataOutput*> outputs;
 
 		outputs.push_back(new AmplOutputScalar<unsigned int>(false));
+		outputs.push_back(new AmplOutputScalar<unsigned long int>(false));
 		outputs.push_back(new AmplOutputVector<unsigned int, unsigned int>(true));
 		outputs.push_back(new AmplOutputVector<unsigned int, unsigned long int>(true));
 		outputs.push_back(new AmplOutputSet<unsigned int>(true));

@@ -26,6 +26,7 @@
 
 #include <pelib/ExecTask.hpp>
 #include <pelib/ParseException.hpp>
+#include <pelib/Schedule.hpp>
 
 #ifdef debug
 #undef debug
@@ -219,6 +220,31 @@ namespace pelib
 	ExecTask::getMasterCore() const
 	{
 		return this->master;
+	}
+
+	Platform::island
+	ExecTask::runIsland(const Schedule &schedule) const
+	{
+		const Schedule::Table &table = schedule.getSchedule();
+		Platform::island cores;
+		for(const pair<unsigned int, set<ExecTask>> &i: table)
+		{
+			unsigned int core_id = i.first;
+			const set<ExecTask> &list = i.second;
+			set<const Core*>::const_iterator search = schedule.getPlatform().getCores().begin();
+			std::advance(search, core_id);
+			const Core* core = *search;
+		
+			for(const ExecTask &eTask: list)
+			{
+				if(eTask == *this)
+				{
+					cores.insert(core);
+				}
+			}
+		}
+
+		return cores;
 	}
 }
 

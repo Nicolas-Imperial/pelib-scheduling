@@ -66,7 +66,7 @@ namespace pelib
 			virtual void dump(std::ostream &os, const Taskgraph *data, const Platform *arch) const;
 
 			static const std::string producerName, consumerName;
-			static const std::string type, header;
+			static const std::string type, header, includePath;
 			static const std::string producer_rate;
 			static const std::string consumer_rate;
 		protected:

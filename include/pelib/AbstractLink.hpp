@@ -31,7 +31,8 @@ namespace pelib
 	{
 		public:
 			/** Constructor. Takes the producer and consumer tasks at both ends of the link **/
-			AbstractLink(const Task &producer, const Task &consumer, const std::string &producerName, const std::string &consumerName, const std::string &type, const std::string &header, size_t producer_rate = 0, size_t consumer_rate = 0);
+			AbstractLink(const Task &producer, const Task &consumer, const std::string &producerName, const std::string &consumerName, const std::string &type, const std::string &header, const std::string &include_path, size_t producer_rate = 0, size_t consumer_rate = 0);
+			AbstractLink(const AbstractLink &copy, const Task &producer, const Task &consumer);
 			AbstractLink(const AbstractLink& link);
 			virtual ~AbstractLink();
 
@@ -72,6 +73,12 @@ namespace pelib
 			getHeader() const;
 
 			const std::string&
+			getIncludePath() const;
+
+			const size_t
+			getTypeSize() const;
+
+			const std::string&
 			getProducerName() const;
 
 			const std::string&
@@ -97,6 +104,7 @@ namespace pelib
 				Memory *mem = new Memory();
 				return *mem;
 			}
+
 			const Memory&
 			getConsumerMemory() const
 			{
@@ -108,7 +116,7 @@ namespace pelib
 			const Task *producer, *consumer;
 			std::string producerName, consumerName;
 			size_t producer_rate, consumer_rate;
-			std::string dataType, header;
+			std::string dataType, header, includePath;
 		private:		
 	};
 }

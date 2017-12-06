@@ -187,7 +187,7 @@ parse_buffer(size_t argc, char **argv, Memory &mem)
 {
 	unsigned int core = 0;
 	unsigned int level = 0, instance = 0;
-	Memory::Feature feature = (Memory::Feature)((int)Memory::Feature::distributed | (int)Memory::Feature::smallAndCheap);
+	Memory::Feature feature = (Memory::Feature)((int)Memory::Feature::distributed);
 
 	unsigned int i;
 	for(i = 0; i < argc; i++)
@@ -274,7 +274,7 @@ read_args(size_t argc, char **argv)
 		if(string(argv[i]).compare("--sync") == 0)
 		{
 			i++;
-			Memory::Feature feature = (Memory::Feature)((int)Memory::Feature::distributed | (int)Memory::Feature::smallAndCheap);
+			Memory::Feature feature = (Memory::Feature)((int)Memory::Feature::distributed);
 			unsigned int level = 0;
 			unsigned int instance = 0;
 			unsigned int core = 0;
@@ -682,7 +682,7 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 		const Task &prod = *prod_search;
 		const Task &cons = *cons_search;
 
-		set<AbstractLink>::const_iterator link_search = tg.getLinks().find(AbstractLink(prod, cons, i.producer_name, i.consumer_name, string(), string()));
+		set<AbstractLink>::const_iterator link_search = tg.getLinks().find(AbstractLink(prod, cons, i.producer_name, i.consumer_name, string(), string(), string()));
 		if(link_search == tg.getLinks().end())
 		{
 			stringstream ss;
@@ -734,7 +734,7 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 
 			if(!found)
 			{
-				links.insert(AllotedLink(abstract, Buffer(abstract.getProducerRate() * abstract.getConsumerRate(), abstract.getDataType(), abstract.getHeader(), Memory((Memory::Feature)((int)Memory::Feature::exclusive | (int)Memory::Feature::smallAndCheap), 0, 0, 0)), Memory::nullMemory(), Memory::nullMemory()));
+				links.insert(AllotedLink(abstract, Buffer(abstract.getProducerRate() * abstract.getConsumerRate(), abstract.getDataType(), abstract.getHeader(), Memory((Memory::Feature)((int)Memory::Feature::exclusive), 0, 0, 0)), Memory::nullMemory(), Memory::nullMemory()));
 			}
 		}
 	}

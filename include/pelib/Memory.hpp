@@ -28,10 +28,8 @@ namespace pelib
 	class Memory
 	{
 		public:
-			enum class Feature: int { undefined = 0, exclusive = 1, shared = 2, distributed = 3, smallAndCheap = 4, largeAndCostly = 8 };
-			static const std::string undefined, exclusive, shared, distributed, smallAndCheap, largeAndCostly;
-			static const unsigned int memoryAccessMask;
-			static const unsigned int memoryCostMask;
+			enum class Feature: int { undefined = 0, exclusive = 1, shared = 2, distributed = 3 };
+			static const std::string undefined, exclusive, shared, distributed;
 			/** Constructor. Takes the producer and consumer tasks at both ends of the link **/
 			Memory();
 			Memory(Feature feature, unsigned int level, const unsigned int core, const unsigned int instance = 0);

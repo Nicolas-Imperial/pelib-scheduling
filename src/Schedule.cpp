@@ -21,6 +21,8 @@
 #include <set>
 #include <string>
 
+#include <pelib/AmplInputScalar.hpp>
+#include <pelib/UniformLinkAllocator.hpp>
 #include <pelib/Schedule.hpp>
 #include <pelib/Scalar.hpp>
 #include <pelib/Vector.hpp>
@@ -46,12 +48,32 @@ namespace pelib
 		this->name = name;
 		this->appName = appName;
 	
-		this->setSchedule(schedule, links, application, platform);
+		this->setSchedule(schedule, links, application, platform);		
 	}
 
 	Schedule::~Schedule()
 	{
 		// Do nothing
+	}
+
+	const ExecTask&
+	Schedule::getExecTask(const Task &task) const
+	{
+		// Do nothing
+		for(const pair<unsigned int, set<ExecTask>> &i: this->getSchedule())
+		{
+			for(const ExecTask &eTask: i.second)
+			{
+				if(task == eTask.getTask())
+				{
+					return eTask;
+				}
+			}
+		}
+
+		stringstream ss;
+		ss << "Task \"" << task.getName() << "\" is not part of schedule";
+		throw PelibException(ss.str());
 	}
 
 	void
@@ -68,7 +90,12 @@ namespace pelib
 			set<AbstractLink>::const_iterator link = this->getTaskgraph().getLinks().find(i->getLink());
 			if(link == this->getTaskgraph().getLinks().end())
 			{
-				throw PelibException("Schedule contains a link that does not exists in taskgraph");
+				stringstream ss;
+				const AbstractLink &abl = i->getLink();
+				const Task *pt = abl.getProducer();
+				const Task *ct = abl.getConsumer();
+				ss << "Schedule contains link from task \"" << i->getLink().getProducer()->getName() << "\" (\"" << i->getLink().getLink().getProducerName() << "\") to task \"" << i->getLink().getConsumer()->getName() << "\" (\"" << i->getLink().getConsumerName() << "\") but it does not exist in taskgraph";
+				throw PelibException(ss.str());
 			}
 			AllotedLink allotedLink(*link, i->getQueueBuffer(), i->getProducerMemory(), i->getConsumerMemory());
 
@@ -112,6 +139,114 @@ namespace pelib
 		this->setSchedule(src.getSchedule(), src.getLinks(), src.getTaskgraph(), src.getPlatform());
 	}
 
+#if 0
+	set<const ExecTask*>
+	Schedule::execTasksIsland(const Platform::island &island) const
+	{
+		set<const ExecTask*> out;
+		for(const Core* core: island)
+		{
+			set<const Core*>::const_iterator core_search = this->getPlatform().getCores().find(core);
+			if(core_search == this->getPlatform().getCores().end())
+			{
+				throw PelibException("Requested tasks running by cores that do not belong to platform.");
+			}
+			
+			unsigned int core_id = std::distance(this->getPlatform().getCores().begin(), core_search);
+			
+			Schedule::Table::const_iterator core_id_search = this->getSchedule().find(core_id);
+			if(core_id_search != this->getSchedule().end())
+			{
+				for(const ExecTask &eTask: core_id_search->second)
+				{
+					Platform::island isl = eTask.runIsland(*this);
+					bool included = true;
+					for(const Core *c: isl)
+					{
+						if(island.find(c) == island.end())
+						{
+							included = false;
+							break;
+						}
+					}
+
+					if(included)
+					{
+						out.insert(&eTask);
+					}
+				}
+			}
+		}		
+
+		return out;
+	}
+
+	set<const Task*>
+	Schedule::tasksIsland(const Platform::island &island) const
+	{
+		set<const Task*> out;
+		for(const Core* core: island)
+		{
+			set<const Core*>::const_iterator core_search = this->getPlatform().getCores().find(core);
+			if(core_search == this->getPlatform().getCores().end())
+			{
+				throw PelibException("Requested tasks running by cores that do not belong to platform.");
+			}
+			
+			unsigned int core_id = std::distance(this->getPlatform().getCores().begin(), core_search);
+			
+			Schedule::Table::const_iterator core_id_search = this->getSchedule().find(core_id);
+			if(core_id_search != this->getSchedule().end())
+			{
+				for(const ExecTask &eTask: core_id_search->second)
+				{
+					Platform::island isl = eTask.runIsland(*this);
+					bool included = true;
+					for(const Core *c: isl)
+					{
+						if(island.find(c) == island.end())
+						{
+							included = false;
+							break;
+						}
+					}
+
+					if(included)
+					{
+						out.insert(&eTask.getTask());
+					}
+				}
+			}
+		}		
+
+		return out;
+	}
+#endif
+
+	Platform::island
+	Schedule::taskIsland(const Task &task) const
+	{
+		Platform::island out;
+		for(const pair<unsigned int, set<ExecTask>> &p: this->getSchedule())
+		{
+			for(const ExecTask &eTask: p.second)
+			{
+				if(eTask.getTask() == task)
+				{
+					set<const Core*>::const_iterator core_search = this->getPlatform().getCores().begin();
+					std::advance(core_search, p.first);
+					if(core_search == this->getPlatform().getCores().end())
+					{
+						throw PelibException("Schedule includes a core that cannot be found in associated platform.");
+					}
+					out.insert(*core_search);
+				}
+			}
+		}
+
+		return out;
+	}
+
 	void
 	Schedule::merge(const Schedule &schedule, const string &schedule_name, const string &app_name, const set<AllotedLink> &junction)
 	{
@@ -120,6 +255,7 @@ namespace pelib
 		const Taskgraph &foreign_taskgraph = schedule.getTaskgraph();
 
 		Schedule me(*this);
+		me.name = schedule_name;
 		Schedule::Table this_table = me.getSchedule();
 		set<AllotedLink> this_links = me.getLinks();
 		Taskgraph this_taskgraph = me.getTaskgraph();
@@ -198,6 +334,7 @@ namespace pelib
 		const Vector<int, string> *task_name = algebra.find<Vector<int, string> >("name");
 
 		Taskgraph taskgraph = Taskgraph(algebra);
+		GraphML().dump(cout, taskgraph);
 		Platform platform = Platform(algebra);
 
 		Table schedule;
@@ -391,7 +528,6 @@ namespace pelib
 	
 		// Copy taskgraph	
 		this->setSchedule(schedule, copy.getLinks(), copy.getTaskgraph(), copy.getPlatform());
-
 		return *this;
 	}
 
@@ -413,9 +549,11 @@ namespace pelib
 	}
 
 	void
-	Schedule::allocateLinks(const Schedule &schedule)
+	Schedule::allocateLinks(const ScheduleLinkAllocator &alloc)
 	{
-		// Do nothing
+		Schedule cpy = *this;
+		set<AllotedLink> links = alloc.allocate(cpy);
+		this->setSchedule(cpy.getSchedule(), links, cpy.getTaskgraph(), cpy.getPlatform());
 	}
 
 	set<const Task*>

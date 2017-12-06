@@ -49,6 +49,7 @@ struct args
 {
 	vector<string> string_id;
 	string name;
+	string taskgraph;
 };
 typedef struct args args_t;
 
@@ -58,6 +59,7 @@ parse(char** arg)
 {
 	args_t args;
 	args.name = string(typeid(Schedule).name());
+	args.taskgraph = string();
 
 	for(; arg[0] != NULL; arg++)
 	{
@@ -65,6 +67,20 @@ parse(char** arg)
 		{
 			arg++;
 			args.name = string(arg[0] != NULL ? arg[0] : string(typeid(Schedule).name()));
+			continue;
+		}
+
+		if(strcmp(arg[0], "--taskgraph") == 0)
+		{
+			arg = arg[1] != NULL ? arg + 1 : arg;
+			if(string(arg[0]).compare("--class") == 0 || string(arg[0]).compare("--taskgraph") == 0)
+			{
+				args.taskgraph = string(typeid(Taskgraph).name());
+			}
+			else
+			{
+				args.taskgraph = string(arg[0]);
+			}
 			continue;
 		}
 
@@ -100,6 +116,27 @@ pelib_process(const std::map<string, pelib::Record*> &records, size_t argc, char
 	// Parse extra arguments and skip them
 	args_t args = parse(argv);
 
+	Taskgraph *tg = NULL;
+	if(args.taskgraph.compare(string()) != 0)
+	{
+		map<string, Record*>::const_iterator search_tg = records.find(args.taskgraph);
+		if(search_tg == records.end())
+		{
+			stringstream ss;
+			ss << "Could not find taskgraph named \"" << args.taskgraph << "\".";
+			throw PelibException(ss.str());
+		}
+		const Taskgraph *tgRef = dynamic_cast<Taskgraph*>(search_tg->second);
+		if(tgRef == NULL)
+		{
+			stringstream ss;
+			ss << "Could not find taskgraph named \"" << args.taskgraph << "\".";
+			throw PelibException(ss.str());
+		}
+
+		tg = tgRef->clone();
+	}
+
 	// Gather all schedules to be merged, in order, if any
 	vector<const Schedule*> schedules;
 	if(args.string_id.size() == 0)
@@ -134,16 +171,30 @@ pelib_process(const std::map<string, pelib::Record*> &records, size_t argc, char
 	}
 
 	vector<const Schedule*>::const_iterator i = schedules.begin();
-	Schedule *schedule = new Schedule(**i);
+	Schedule *schedule;
+	if(tg == NULL)
+	{
+ 		schedule = new Schedule(**i);
+	}
+	else
+	{
+		schedule = new Schedule((*i)->getName(), tg->getName(), (*i)->getSchedule(), (*i)->getLinks(), *tg, (*i)->getPlatform());
+	}
 	std::advance(i, 1);
 	for(; i != schedules.end(); i++)
 	{
-		// TODO: Add allocated links
-		schedule->merge(**i, schedule->getName(), schedule->getAppName(), set<AllotedLink>());
+		schedule->merge(**i, string(schedule->getName()).append(string("+")).append((*i)->getName()), schedule->getAppName(), set<AllotedLink>());
 	}
 
 	map<string, Record*> output;
 	output.insert(pair<string, Record*>(args.name, schedule));
+
+	// Now put cloned ref taskgraph
+	if(tg != NULL)
+	{
+		output.insert(pair<string, Record*>(args.taskgraph, tg));
+	}
+
 	for(map<string, Record*>::const_iterator i = records.begin(); i != records.end(); i++)
 	{
 		output.insert(pair<string, Record*>(i->first, i->second->clone()));

@@ -76,10 +76,6 @@ namespace pelib
 	const string Memory::exclusive = "DRAKE_MEMORY_PRIVATE";
 	const string Memory::shared = "DRAKE_MEMORY_SHARED";
 	const string Memory::distributed = "DRAKE_MEMORY_DISTRIBUTED";
-	const string Memory::smallAndCheap = "DRAKE_MEMORY_SMALL_CHEAP";
-	const string Memory::largeAndCostly = "DRAKE_MEMORY_LARGE_COSTLY";
-	const unsigned int Memory::memoryAccessMask = 3;
-	const unsigned int Memory::memoryCostMask = 12;
 	string
 	Memory::featureToString(Feature feature)
 	{
@@ -89,7 +85,6 @@ namespace pelib
 		}
 
 		Feature access = (Feature)((int)feature & 3); // Keep only 2 weakest bits
-		Feature type = (Feature)((int)feature & 12); // Keep the 2 next weakest bits
 
 		string str;
 		switch(access)
@@ -108,21 +103,6 @@ namespace pelib
 				ss << (int)access;
 				throw PelibException(string("Unknown memory access type: ") + ss.str());
 			break;
-			break;
-		}
-
-		switch(type)
-		{
-			case Memory::Feature::smallAndCheap:
-				str += string(" | ") + Memory::smallAndCheap;
-			break;
-			case Memory::Feature::largeAndCostly:
-				str += string(" | ") + Memory::largeAndCostly;
-			break;
-			default:
-				stringstream ss;
-				ss << (int)type;
-				throw PelibException(string("Unknown memory cost type: ") + ss.str());
 			break;
 		}
 
@@ -179,14 +159,6 @@ namespace pelib
 			{
 				memory = memory | (int)Memory::Feature::distributed;
 			}
-			else if(token.compare(Memory::smallAndCheap) == 0)
-			{
-				memory = memory | (int)Memory::Feature::smallAndCheap;
-			}
-			else if(token.compare(Memory::largeAndCostly) == 0)
-			{
-				memory = memory | (int)Memory::Feature::largeAndCostly;
-			}
 			else
 			{
 				throw PelibException(string("Invalid memory feature: \"") + token + string("\""));
@@ -196,15 +168,11 @@ namespace pelib
 		}
 	
 		free(str);
+
 		// Throw exception if memory misses fields, except if that is a null memory (= 0)
 		if(((int)memory & 3) == 0 && (int)memory != 0)
 		{
 			throw PelibException(string("Missing memory access feature in memory descriptor \"") + mem + string("\""));
-		}
-
-		if(((int)memory & 12) == 0 && (int)memory != 0)
-		{
-			throw PelibException(string("Missing memory cost in memory descriptor \"") + mem + string("\""));
 		}
 
 		return (Memory::Feature)memory;

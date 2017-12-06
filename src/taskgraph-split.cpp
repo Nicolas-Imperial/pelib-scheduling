@@ -169,12 +169,18 @@ pelib_process(const std::map<string, pelib::Record*> &records, size_t argc, char
 		throw PelibException(ss.str());
 	}
 	const Taskgraph &tg = *tg_ptr;
+	//debug(tg.getLinks().begin()->getDataType());
 
 	map<string, Record*> output;
 	set<Task> split; // Keeps track of all tasks that have been set to any new taskgraph
 	for(const tgd_t &tgd: args.tgs)
 	{
-		output.insert(pair<string, Record*>(tgd.name, split_tg(tgd, tg, split)));
+		Taskgraph *t = split_tg(tgd, tg, split);
+		if(t->getLinks().size() > 0)
+		{
+			//debug(t->getLinks().begin()->getDataType());
+		}
+		output.insert(pair<string, Record*>(tgd.name, t));
 	}
 
 	if(args.others.compare("") != 0)
@@ -190,13 +196,26 @@ pelib_process(const std::map<string, pelib::Record*> &records, size_t argc, char
 			}
 		}
 
-		output.insert(pair<string, Record*>(tgd.name, split_tg(tgd, tg, split)));
+		Taskgraph *t = split_tg(tgd, tg, split);
+		//debug(t->getLinks().begin()->getDataType());
+		output.insert(pair<string, Record*>(tgd.name, t));
 	}
 
 	// Add all remaining records into collection
 	for(map<string, Record*>::const_iterator i = records.begin(); i != records.end(); i++)
 	{
-		output.insert(pair<string, Record*>(i->first, i->second->clone()));
+		Record *split;
+		if(i->first.compare(string(typeid(Taskgraph).name())) == 0)
+		{
+			//debug(((Taskgraph*)i->second)->getLinks().begin()->getDataType());
+			Taskgraph *t = (Taskgraph*)i->second->clone();
+			split = t;
+		}
+		else
+		{
+			split = i->second->clone();
+		}
+		output.insert(pair<string, Record*>(i->first, split));
 	}
 
 	return output;

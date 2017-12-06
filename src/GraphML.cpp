@@ -68,6 +68,7 @@ const string GraphML::producerName = "producer_name";
 const string GraphML::consumerName = "consumer_name";
 const string GraphML::type = "type";
 const string GraphML::header = "header";
+const string GraphML::includePath = "include_path";
 const string GraphML::producer_rate = "produce";
 const string GraphML::consumer_rate = "consume";
 
@@ -207,6 +208,10 @@ GraphML::dump(ostream& os, const Taskgraph *data, const Platform *arch) const
 		if(i->getHeader().compare(string()) != 0)
 		{
 			SETEAS(graph, type.c_str(), counter, i->getHeader().c_str());
+		}
+		if(i->getIncludePath().compare(string()) != 0)
+		{
+			SETEAS(graph, type.c_str(), counter, i->getIncludePath().c_str());
 		}
 		if(i->getProducerRate() > 0)
 		{
@@ -373,6 +378,7 @@ GraphML::parse(istream &is) const
 		string consumerName = string(EAS(the_graph, GraphML::consumerName.c_str(), i));
 		string type = string(EAS(the_graph, GraphML::type.c_str(), i));
 		string header = string(EAS(the_graph, GraphML::header.c_str(), i));
+		string include_path = string(EAS(the_graph, GraphML::includePath.c_str(), i));
 		if(igraph_cattribute_has_attr(the_graph, IGRAPH_ATTRIBUTE_EDGE, GraphML::type.c_str()))
 		{
 			type = string(EAS(the_graph, GraphML::type.c_str(), i));
@@ -388,7 +394,7 @@ GraphML::parse(istream &is) const
 		}
 
 		Buffer nullBuffer = Buffer::nullBuffer();
-		AbstractLink link(*tasks.find(producer), *tasks.find(consumer), producerName, consumerName, type, header, producer_rate, consumer_rate);
+		AbstractLink link(*tasks.find(producer), *tasks.find(consumer), producerName, consumerName, type, header, include_path, producer_rate, consumer_rate);
 		links.insert(link);
 
 		const AbstractLink &link_ref = *links.find(link);

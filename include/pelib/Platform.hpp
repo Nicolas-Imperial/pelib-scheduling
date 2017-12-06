@@ -93,7 +93,7 @@ namespace pelib
 				@param voltage Voltage scaling islands
 				@param freq Frequency scaling islands
 			**/
-			Platform(const island& cores, const islands &shared, const islands &main, const islands &priv, const islands &voltage, const islands &freq, const std::map<std::pair<island, unsigned int>, Core::MemorySize> &sm, const std::map<unsigned int, Core::MemorySize> &dm);
+			Platform(const island& cores, const islands &shared, const islands &main, const islands &priv, const islands &voltage, const islands &freq, const std::map<std::pair<island, unsigned int>, Core::MemorySize> &sm, const std::map<unsigned int, Core::MemorySize> &dm, const Core::MemorySize &syncSize, const Core::MemorySize &pmcpbs, const Core::MemorySize &pmccbs, const Core::MemorySize &smcppbs, const Core::MemorySize &smcpsbs, const Core::MemorySize &smccpbs, const Core::MemorySize &smccsbs, const Core::MemorySize &dmcppbs, const Core::MemorySize &dmcpdbs, const Core::MemorySize &dmccpbs, const Core::MemorySize &dmccdbs);
 
 			/** Copy constructor **/
 			Platform(const Platform *arch);
@@ -158,6 +158,49 @@ namespace pelib
 			const std::map<unsigned int, Core::MemorySize>&
 			getDistributedMemories() const;
 
+			const Core::MemorySize&
+			getSyncSize() const;
+
+			/** Memory size in bytes necessary on the producer side of a channel alloted in private memory **/
+			const Core::MemorySize&
+			getPrivMemChanProdBuffSize() const;
+
+			/** Memory size in bytes necessary on the consumer side of a channel alloted in private memory **/
+			const Core::MemorySize&
+			getPrivMemChanConsBuffSize() const;
+
+			/** Private Memory size in bytes necessary on the producer side of a channel alloted in shared memory **/
+			const Core::MemorySize&
+			getSharedMemChanProdPrivBuffSize() const;
+
+			/** Shared Memory size in bytes necessary on the producer side of a channel alloted in shared memory **/
+			const Core::MemorySize&
+			getSharedMemChanProdSharedBuffSize() const;
+
+			/** Private Memory size in bytes necessary on the consumer side of a channel alloted in shared memory **/
+			const Core::MemorySize&
+			getSharedMemChanConsPrivBuffSize() const;
+
+			/** Shared Memory size in bytes necessary on the consumer side of a channel alloted in shared memory **/
+			const Core::MemorySize&
+			getSharedMemChanConsSharedBuffSize() const;
+
+			/** Private Memory size in bytes necessary on the producer side of a channel alloted in distributed memory **/
+			const Core::MemorySize&
+			getDistMemChanProdPrivBuffSize() const;
+
+			/** Distributed Memory size in bytes necessary on the producer side of a channel alloted in distributed memory **/
+			const Core::MemorySize&
+			getDistMemChanProdDistBuffSize() const;
+
+			/** Private Memory size in bytes necessary on the consumer side of a channel alloted in distributed memory **/
+			const Core::MemorySize&
+			getDistMemChanConsPrivBuffSize() const;
+
+			/** Distributed Memory size in bytes necessary on the consumer side of a channel alloted in distributed memory **/
+			const Core::MemorySize&
+			getDistMemChanConsDistBuffSize() const;
+
 			/** Destructor **/
 			virtual	~Platform();
 			virtual Platform&
@@ -173,6 +216,7 @@ namespace pelib
 		private:		
 			void copy(const Platform *pt);
 			static std::map<std::string, const std::type_info&> amplDirectives;
+			Core::MemorySize syncSize, pmcpbs, pmccbs, smcppbs, smcpsbs, smccpbs, smccsbs, dmcppbs, dmcpdbs, dmccpbs, dmccdbs;
 	};
 }
 

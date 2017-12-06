@@ -80,15 +80,47 @@ namespace pelib
 		const set<AbstractLink> &foreign_links = tg.getLinks();
 
 		set<Task> this_tasks = this->getTasks();
-		set<AbstractLink> this_links = this->getLinks();
-
 		this_tasks.insert(foreign_tasks.begin(), foreign_tasks.end());
-		this_links.insert(foreign_links.begin(), foreign_links.end());
-		this_links.insert(junction.begin(), junction.end());
 
-		this->tasks = this_tasks;
+		set<AbstractLink> this_links = this->getLinks();
+		for(const AbstractLink &ab: foreign_links)
+		{
+			set<Task>::const_iterator search_producer = this_tasks.find(*ab.getProducer());
+			if(search_producer == this_tasks.end())
+			{
+				stringstream ss;
+				ss << "Could not find task \"" << ab.getProducer()->getName() << "\" in merge task set";
+				throw PelibException(ss.str());
+			}
+			set<Task>::const_iterator search_consumer = this_tasks.find(*ab.getConsumer());
+			if(search_consumer == this_tasks.end())
+			{
+				stringstream ss;
+				ss << "Could not find task \"" << ab.getConsumer()->getName() << "\" in merge task set";
+				throw PelibException(ss.str());
+			}
+			this_links.insert(AbstractLink(ab, *search_producer, *search_consumer));
+		}
+		for(const AbstractLink &ab: junction)
+		{
+			set<Task>::const_iterator search_producer = this_tasks.find(*ab.getProducer());
+			if(search_producer == this_tasks.end())
+			{
+				stringstream ss;
+				ss << "Could not find task \"" << ab.getProducer()->getName() << "\" in merge task set";
+				throw PelibException(ss.str());
+			}
+			set<Task>::const_iterator search_consumer = this_tasks.find(*ab.getConsumer());
+			if(search_consumer == this_tasks.end())
+			{
+				stringstream ss;
+				ss << "Could not find task \"" << ab.getConsumer()->getName() << "\" in merge task set";
+				throw PelibException(ss.str());
+			}
+			this_links.insert(AbstractLink(ab, *search_producer, *search_consumer));
+		}
+
 		this->setLinks(this_links);
-		
 		this->setDeadlineCalculator(deadline);
 	}
 
@@ -111,7 +143,7 @@ namespace pelib
 			const Task &producer = *this->tasks.find(*i->getProducer());
 			const Task &consumer = *this->tasks.find(*i->getConsumer());
 
-			AbstractLink link(producer, consumer, i->getProducerName(), i->getConsumerName(), i->getDataType(), i->getHeader(), i->getProducerRate(), i->getConsumerRate());
+			AbstractLink link(producer, consumer, i->getProducerName(), i->getConsumerName(), i->getDataType(), i->getHeader(), i->getIncludePath(), i->getProducerRate(), i->getConsumerRate());
 			this->links.insert(link);
 		}
 
@@ -133,7 +165,7 @@ namespace pelib
 			{
 				const Task *producer = (*j)->getProducer();
 				const Task *consumer = (*j)->getConsumer();
-				AbstractLink newAbstractLink(*this->tasks.find(*producer), *this->tasks.find(*consumer), (*j)->getProducerName(), (*j)->getConsumerName(), (*j)->getDataType(), (*j)->getHeader(), (*j)->getProducerRate(), (*j)->getConsumerRate());
+				AbstractLink newAbstractLink(*this->tasks.find(*producer), *this->tasks.find(*consumer), (*j)->getProducerName(), (*j)->getConsumerName(), (*j)->getDataType(), (*j)->getHeader(), (*j)->getIncludePath(), (*j)->getProducerRate(), (*j)->getConsumerRate());
 				const AbstractLink &link = *this->links.find(newAbstractLink);
 				t.getProducers().insert(&link);
 			}
@@ -143,7 +175,7 @@ namespace pelib
 			{
 				const Task *producer = (*j)->getProducer();
 				const Task *consumer = (*j)->getConsumer();
-				AbstractLink newAbstractLink(*this->tasks.find(*producer), *this->tasks.find(*consumer), (*j)->getProducerName(), (*j)->getConsumerName(), (*j)->getDataType(), (*j)->getHeader(), (*j)->getProducerRate(), (*j)->getConsumerRate());
+				AbstractLink newAbstractLink(*this->tasks.find(*producer), *this->tasks.find(*consumer), (*j)->getProducerName(), (*j)->getConsumerName(), (*j)->getDataType(), (*j)->getHeader(), (*j)->getIncludePath(), (*j)->getProducerRate(), (*j)->getConsumerRate());
 				const AbstractLink &link = *this->links.find(newAbstractLink);
 				t.getConsumers().insert(&link);
 			}
@@ -168,18 +200,23 @@ namespace pelib
 
 	Taskgraph::Taskgraph(const Algebra &algebra)
 	{
-		this->name = "Converted from AMPL";
+		this->name = "Converted from Algebra";
 		const Scalar<float> *M = algebra.find<Scalar<float> >("M");
 		const Scalar<float> *n = algebra.find<Scalar<float> >("n");
 		const Vector<int, float> *tau = algebra.find<Vector<int, float> >("Tau");
 		const Vector<int, float> *Wi = algebra.find<Vector<int, float> >("Wi");
 		const Matrix<int, int, float> *e = algebra.find<Matrix<int, int, float> >("e");
 		const Matrix<int, int, float> *c = algebra.find<Matrix<int, int, float> >("c");
+		const Matrix<int, int, string> *cpname = algebra.find<Matrix<int, int, string> >("cpname");
+		const Matrix<int, int, string> *ccname = algebra.find<Matrix<int, int, string> >("ccname");
+		const Matrix<int, int, string> *ctype = algebra.find<Matrix<int, int, string> >("cheader");
+		const Matrix<int, int, string> *cheader = algebra.find<Matrix<int, int, string> >("cheader");
+		const Matrix<int, int, string> *cflag = algebra.find<Matrix<int, int, string> >("cflag");
 		const Vector<int, string> *task_name = algebra.find<Vector<int, string> >("name");
 		
-		if(M == NULL || n == NULL || tau == NULL || Wi == NULL || e == NULL || task_name == NULL)
+		if(M == NULL || n == NULL || tau == NULL || Wi == NULL || e == NULL || task_name == NULL || cpname == NULL || ccname == NULL)
 		{
-			throw PelibException("Missing parameter. Need float scalar M, integer scalar n, integer vectors tau and Wi (of size n), float matrix e of n lines and vector name for tasks' names.");
+			throw PelibException("Missing parameter. Need float scalar M, integer scalar n, integer vectors tau and Wi (of size n), float matrix e of n lines, vector name for tasks' names and links (c, cpname and ccname).");
 		}
 		else
 		{
@@ -213,7 +250,7 @@ namespace pelib
 			this->tasks.insert(t);
 		}
 		
-		if(c != NULL)
+		if(c != NULL && ctype != NULL && cheader != NULL && cflag != NULL)
 		{
 			for(map<int, map<int, float> >::const_iterator i = c->getValues().begin(); i != c->getValues().end(); i++)
 			{
@@ -224,10 +261,17 @@ namespace pelib
 						set<Task>::const_iterator from = this->getTasks().begin(), to = this->getTasks().begin();
 						std::advance(from, (size_t)i->first - 1);
 						std::advance(to, (size_t)j->first - 1);
-						this->links.insert(AbstractLink(*from, *to, from->getName(), to->getName(), string(), string()));
+						//string producer_name = 
+						//string consumer_name = 
+						AbstractLink link(*from, *to, cpname->getValues().find(i->first)->second.find(j->first)->second, ccname->getValues().find(i->first)->second.find(j->first)->second, ctype->getValues().find(i->first)->second.find(j->first)->second, cheader->getValues().find(i->first)->second.find(j->first)->second, cflag->getValues().find(i->first)->second.find(j->first)->second);
+						this->links.insert(link);
 					}
 				}
 			}
+		}
+		else
+		{
+			this->links.clear();
 		}
 	}
 
@@ -258,6 +302,11 @@ namespace pelib
 		Scalar<float> n("n", getTasks().size());
 		map<int, map<int, float> > map_e;
 		map<int, map<int, float> > map_c;
+		map<int, map<int, string> > map_cpname;
+		map<int, map<int, string> > map_ccname;
+		map<int, map<int, string> > map_ctype;
+		map<int, map<int, string> > map_cheader;
+		map<int, map<int, string> > map_cflag;
 		map<int, float> map_tau;
 		map<int, float> map_streaming;
 		map<int, float> map_Wi;
@@ -292,6 +341,11 @@ namespace pelib
 			map_e.insert(pair<int, map<int, float> >(std::distance(this->getTasks().begin(), i) + 1, task_e));
 
 			map<int, float> task_c;
+			map<int, string> task_cpname;
+			map<int, string> task_ccname;
+			map<int, string> task_ctype;
+			map<int, string> task_cheader;
+			map<int, string> task_cflag;
 			for(set<Task>::const_iterator j = getTasks().begin(); j != getTasks().end(); j++)
 			{
 				set<AbstractLink>::const_iterator k;
@@ -300,16 +354,31 @@ namespace pelib
 					if(*k->getProducer() == *i && *k->getConsumer() == *j)
 					{
 						task_c.insert(pair<int, float>((int)std::distance(this->getTasks().begin(), j) + 1, 1));
+						task_ctype.insert(pair<int, string>((int)std::distance(this->getTasks().begin(), j) + 1, k->getDataType()));
+						task_cpname.insert(pair<int, string>((int)std::distance(this->getTasks().begin(), j) + 1, k->getProducerName()));
+						task_ccname.insert(pair<int, string>((int)std::distance(this->getTasks().begin(), j) + 1, k->getConsumerName()));
+						task_cheader.insert(pair<int, string>((int)std::distance(this->getTasks().begin(), j) + 1, k->getHeader()));
+						task_cflag.insert(pair<int, string>((int)std::distance(this->getTasks().begin(), j) + 1, k->getIncludePath()));
 						break;
 					}
 				}
 				if(k == this->getLinks().end())
 				{
 					task_c.insert(pair<int, float>((int)std::distance(this->getTasks().begin(), j) + 1, 0));
+					task_cpname.insert(pair<int, string>((int)std::distance(this->getTasks().begin(), j) + 1, string("none")));
+					task_ccname.insert(pair<int, string>((int)std::distance(this->getTasks().begin(), j) + 1, string("none")));
+					task_ctype.insert(pair<int, string>((int)std::distance(this->getTasks().begin(), j) + 1, string("none")));
+					task_cheader.insert(pair<int, string>((int)std::distance(this->getTasks().begin(), j) + 1, string("none")));
+					task_cflag.insert(pair<int, string>((int)std::distance(this->getTasks().begin(), j) + 1, string("none")));
 				}
 			}
 			
 			map_c.insert(pair<int, map<int, float> >(std::distance(this->getTasks().begin(), i) + 1, task_c));
+			map_ctype.insert(pair<int, map<int, string> >(std::distance(this->getTasks().begin(), i) + 1, task_ctype));
+			map_cheader.insert(pair<int, map<int, string> >(std::distance(this->getTasks().begin(), i) + 1, task_cheader));
+			map_cflag.insert(pair<int, map<int, string> >(std::distance(this->getTasks().begin(), i) + 1, task_cflag));
+			map_cpname.insert(pair<int, map<int, string> >(std::distance(this->getTasks().begin(), i) + 1, task_cpname));
+			map_ccname.insert(pair<int, map<int, string> >(std::distance(this->getTasks().begin(), i) + 1, task_ccname));
 		}
 
 		Vector<int, float> tau("Tau", map_tau);
@@ -317,6 +386,11 @@ namespace pelib
 		Vector<int, string> name("name", map_name);
 		Matrix<int, int, float> e("e", map_e);
 		Matrix<int, int, float> c("c", map_c);
+		Matrix<int, int, string> ctype("cpname", map_cpname);
+		Matrix<int, int, string> cpname("ccname", map_ccname);
+		Matrix<int, int, string> ccname("ctype", map_ctype);
+		Matrix<int, int, string> cheader("cheader", map_cheader);
+		Matrix<int, int, string> cflag("cflag", map_cflag);
 
 		Scalar<float> M("M", getDeadline(arch), AlgebraData::higher);
 
@@ -326,6 +400,11 @@ namespace pelib
 		out.insert(&Wi);
 		out.insert(&e);
 		out.insert(&c);
+		out.insert(&cpname);
+		out.insert(&ccname);
+		out.insert(&ctype);
+		out.insert(&cheader);
+		out.insert(&cflag);
 		out.insert(&M);
 
 		return out;
