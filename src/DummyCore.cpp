@@ -20,6 +20,10 @@
 
 #include <pelib/DummyCore.hpp>
 
+#ifndef debug
+#define debug(expr) cerr << "[" << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << "] " << #expr << " = \"" << expr << "\"." << endl;
+#endif
+
 using namespace std;
 
 namespace pelib

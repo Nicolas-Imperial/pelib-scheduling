@@ -73,13 +73,15 @@ AbstractLink.cpp AllotedLink.cpp Buffer.cpp Memory.cpp ExecTask.cpp TaskSync.cpp
 Schedule.cpp \
 XMLSchedule.cpp TetrisSchedule.cpp \
 ScheduleLinkAllocator.cpp UniformLinkAllocator.cpp \
+ExecutionMode.cpp BusyMode.cpp \
+PowerReport.cpp PowerEvaluator.cpp KimEtAlPowerModel.cpp \
 schedule-parse.cpp 
 
 ## executables
 bincxx_package = 
 
 ## dynamic library packages and their sources
-corepp = pelib-scheduling pelib-platform-ampl_input pelib-platform-ampl_output pelib-taskgraph-graphml pelib-taskgraph-streamit pelib-taskgraph-ampl_input pelib-taskgraph-ampl_output pelib-schedule-xml pelib-schedule-tetris pelib-schedule-ampl_input pelib-schedule-ampl_output pelib-schedule pelib-generate pelib-schedule-manual pelib-schedule-copy pelib-schedule-merge pelib-taskgraph-split pelib-link-uniform
+corepp = pelib-scheduling pelib-platform-ampl_input pelib-platform-ampl_output pelib-taskgraph-graphml pelib-taskgraph-streamit pelib-taskgraph-ampl_input pelib-taskgraph-ampl_output pelib-schedule-xml pelib-schedule-tetris pelib-schedule-ampl_input pelib-schedule-ampl_output pelib-schedule pelib-generate pelib-schedule-manual pelib-schedule-copy pelib-schedule-merge pelib-taskgraph-split pelib-link-uniform pelib-evaluate pelib-kimetal pelib-power_report-ampl_output
 sharedcxx_package = $(if $(filter 1,$(CORE++_SHARED)),$(corepp))
 sharedcc_package =
 
@@ -97,7 +99,7 @@ shared_pelib-scheduling_pkg_libs = $(shared_pelib-scheduling_libs)
 shared_pelib-scheduling_pkg_igraph_version = >= 0.7.1
 shared_pelib_pkg_libxml++-2.6_version = >= 2.20
 shared_pelib_pkg_cairomm-1.0_version = >= 1.8.0
-shared_pelib-scheduling_pkg_requires = pelib-core++ 
+shared_pelib-scheduling_pkg_requires = pelib-core++ pelib-mip 
 shared_pelib-scheduling_pkg_description = General research utility library used in PELAB
 shared_pelib-scheduling_embed = 
 
@@ -251,6 +253,45 @@ shared_pelib-schedule-ampl_output_pkg_libs =
 shared_pelib-schedule-ampl_output_cxxflags = -fPIC
 shared_pelib-schedule-ampl_output_pkg_description = Platform parser and output in AMPL input format
 shared_pelib-schedule-ampl_output_embed =
+
+sharedcxx_pelib-evaluate_src = evaluate.cpp
+shared_pelib-evaluate_export = $(sharedcxx_pelib-evaluate_embed) $(sharedcxx_pelib-evaluate_src)
+shared_pelib-evaluate_libs = -lpelib-scheduling
+shared_pelib-evaluate_ldflags = -L.
+shared_pelib-evaluate_deps = libpelib-scheduling.so
+shared_pelib-evaluate_pkg = 
+shared_pelib-evaluate_pkg_url = http://www.ida.liu.se/~nicme26
+shared_pelib-evaluate_pkg_ld =
+shared_pelib-evaluate_pkg_libs =
+shared_pelib-evaluate_cxxflags = -fPIC
+shared_pelib-evaluate_pkg_description = Schedule evaluation interface
+shared_pelib-evaluate_embed =
+
+sharedcxx_pelib-kimetal_src = kimetal.cpp
+shared_pelib-kimetal_export = $(sharedcxx_pelib-kimetal_embed) $(sharedcxx_pelib-kimetal_src)
+shared_pelib-kimetal_libs = -lpelib-scheduling
+shared_pelib-kimetal_ldflags = -L.
+shared_pelib-kimetal_deps = libpelib-scheduling.so
+shared_pelib-kimetal_pkg = 
+shared_pelib-kimetal_pkg_url = http://www.ida.liu.se/~nicme26
+shared_pelib-kimetal_pkg_ld =
+shared_pelib-kimetal_pkg_libs =
+shared_pelib-kimetal_cxxflags = -fPIC
+shared_pelib-kimetal_pkg_description = Kim et. Al. power model
+shared_pelib-kimetal_embed =
+
+sharedcxx_pelib-power_report-ampl_output_src = power_report-ampl_output.cpp
+shared_pelib-power_report-ampl_output_export = $(sharedcxx_pelib-power_report-ampl_output_embed) $(sharedcxx_pelib-power_report-ampl_output_src)
+shared_pelib-power_report-ampl_output_libs = -lpelib-scheduling
+shared_pelib-power_report-ampl_output_ldflags = -L.
+shared_pelib-power_report-ampl_output_deps = libpelib-scheduling.so
+shared_pelib-power_report-ampl_output_pkg = 
+shared_pelib-power_report-ampl_output_pkg_url = http://www.ida.liu.se/~nicme26
+shared_pelib-power_report-ampl_output_pkg_ld =
+shared_pelib-power_report-ampl_output_pkg_libs =
+shared_pelib-power_report-ampl_output_cxxflags = -fPIC
+shared_pelib-power_report-ampl_output_pkg_description = Kim et. Al. power model
+shared_pelib-power_report-ampl_output_embed =
 
 sharedcxx_pelib-schedule_src = schedule.cpp
 shared_pelib-schedule_export = $(sharedcxx_pelib-schedule_embed) $(sharedcxx_pelib-schedule_src)

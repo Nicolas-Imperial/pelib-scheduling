@@ -18,27 +18,20 @@
 */
 
 
-#include <map>
+#include <pelib/AmplPowerReport.hpp>
+#include <pelib/RecordOutput.hpp>
 
-#include <pelib/AllotedLink.hpp>
-
-#ifndef PELIB_SCHEDULE_ALLOCATOR
-#define PELIB_SCHEDULE_ALLOCATOR
-
+#ifndef PELIB_AMPL_POWER_REPORT_OUTPUT
+#define PELIB_AMPL_POWER_REPORT_OUTPUT
 
 namespace pelib
-{	
-	// Forward declaration
-	class Schedule;
-
-	/** Schedule of a streaming application **/
-	class ScheduleLinkAllocator
+{
+	/** Base class for a AmplPowerReport output class **/
+	class AmplPowerReportOutput : public RecordOutput
 	{
-		public:
-			virtual ~ScheduleLinkAllocator();
-			virtual Schedule allocate(const Schedule &schedule) const = 0;
+		public:	
 		protected:
-		private:
+		private:		
 	};
 }
 

@@ -25,19 +25,30 @@ using namespace std;
 
 namespace pelib
 {
-	//size_t Core::counter = 0;
+	//std::set<const Core*> Core::freed;
 	Core::Core()
 	{
-		//this->id = Core::counter++;
+	/*
+		if(freed.find(this) != freed.end())
+		{
+			freed.erase(freed.find(this));
+		}
+	*/
 	}	
 
 	Core::Core(const std::map<unsigned int, Core::MemorySize> &pm) : privateMemorySize(pm)
 	{
-		// Do nothing
+	/*
+		if(freed.find(this) != freed.end())
+		{
+			freed.erase(freed.find(this));
+		}
+*/
 	}
 
 	Core::~Core()
 	{
+		//Core::freed.insert(this);
 		// Do nothing
 	}
 

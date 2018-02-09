@@ -205,13 +205,13 @@ GraphML::dump(ostream& os, const Taskgraph *data, const Platform *arch) const
 		{
 			SETEAS(graph, type.c_str(), counter, i->getDataType().c_str());
 		}
-		if(i->getHeader().compare(string()) != 0)
+		//if(i->getHeader().compare(string()) != 0)
 		{
-			SETEAS(graph, type.c_str(), counter, i->getHeader().c_str());
+			SETEAS(graph, header.c_str(), counter, i->getHeader().c_str());
 		}
-		if(i->getIncludePath().compare(string()) != 0)
+		//if(i->getIncludePath().compare(string()) != 0)
 		{
-			SETEAS(graph, type.c_str(), counter, i->getIncludePath().c_str());
+			SETEAS(graph, includePath.c_str(), counter, i->getIncludePath().c_str());
 		}
 		if(i->getProducerRate() > 0)
 		{

@@ -63,6 +63,8 @@ namespace pelib
 			operator<(const Core &other) const;
 	    		virtual bool
 			operator==(const Core &other) const;
+
+			//static std::set<const Core*> freed;
 		protected:
 			//static size_t counter;
 			unsigned int frequencyUnit;

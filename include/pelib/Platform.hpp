@@ -161,6 +161,18 @@ namespace pelib
 			const Core::MemorySize&
 			getSyncSize() const;
 
+			const Core::MemorySize&
+			getPrivMemTaskCost() const;
+			const Core::MemorySize&
+			getPrivMemChanCost() const;
+			const Core::MemorySize&
+			getSharedMemTaskCost() const;
+			const Core::MemorySize&
+			getSharedMemChanCost() const;
+			const Core::MemorySize&
+			getDistMemTaskCost() const;
+			const Core::MemorySize&
+			getDistMemChanCost() const;
 			/** Memory size in bytes necessary on the producer side of a channel alloted in private memory **/
 			const Core::MemorySize&
 			getPrivMemChanProdBuffSize() const;
@@ -205,6 +217,9 @@ namespace pelib
 			virtual	~Platform();
 			virtual Platform&
 			operator=(const Platform& copy);
+
+			void
+			check() const;
 		protected:
 			/** Collection of cores **/
 			island cores;

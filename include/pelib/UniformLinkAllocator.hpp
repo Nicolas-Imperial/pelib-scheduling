@@ -34,7 +34,7 @@ namespace pelib
 		public:
 			UniformLinkAllocator(const std::map<Memory::Feature, unsigned int> &levels = {});
 			virtual ~UniformLinkAllocator();
-			virtual std::set<AllotedLink> allocate(const Schedule &schedule) const;
+			virtual Schedule allocate(const Schedule &schedule) const;
 
 			const std::map<Memory::Feature, unsigned int>&
 			getLevelDirectives() const;

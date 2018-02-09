@@ -17,29 +17,22 @@
  along with Pelib. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <pelib/ExecutionMode.hpp>
 
-#include <map>
+#ifdef debug
+#undef debug
+#endif
 
-#include <pelib/AllotedLink.hpp>
+#define debug(expr) cout << "[" << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << "] " << #expr << " = \"" << (expr) << "\"." << endl;
 
-#ifndef PELIB_SCHEDULE_ALLOCATOR
-#define PELIB_SCHEDULE_ALLOCATOR
-
+using namespace std;
 
 namespace pelib
-{	
-	// Forward declaration
-	class Schedule;
-
-	/** Schedule of a streaming application **/
-	class ScheduleLinkAllocator
+{
+	ExecutionMode::~ExecutionMode()
 	{
-		public:
-			virtual ~ScheduleLinkAllocator();
-			virtual Schedule allocate(const Schedule &schedule) const = 0;
-		protected:
-		private:
-	};
+		// do nothing
+	}
 }
 
-#endif
+

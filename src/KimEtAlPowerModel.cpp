@@ -17,29 +17,28 @@
  along with Pelib. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <pelib/KimEtAlPowerModel.hpp>
 
-#include <map>
+#ifdef debug
+#undef debug
+#endif
 
-#include <pelib/AllotedLink.hpp>
+#define debug(expr) cout << "[" << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << "] " << #expr << " = \"" << (expr) << "\"." << endl;
 
-#ifndef PELIB_SCHEDULE_ALLOCATOR
-#define PELIB_SCHEDULE_ALLOCATOR
-
+using namespace std;
 
 namespace pelib
-{	
-	// Forward declaration
-	class Schedule;
-
-	/** Schedule of a streaming application **/
-	class ScheduleLinkAllocator
+{
+	KimEtAlPowerModel::KimEtAlPowerModel(float K1, float K2, float n, float Vtheta, float Vt, float alpha, float Tox, float W): K1(K1), K2(K2), n(n), Vtheta(Vtheta), Vt(Vt), alpha(alpha), Tox(Tox), W(W)
 	{
-		public:
-			virtual ~ScheduleLinkAllocator();
-			virtual Schedule allocate(const Schedule &schedule) const = 0;
-		protected:
-		private:
-	};
+		// Do nothing else
+	}
+
+	PowerReport
+	KimEtAlPowerModel::evaluate(const Schedule &schedule)
+	{
+		return PowerReport(3);
+		// do nothing
+	}
 }
 
-#endif

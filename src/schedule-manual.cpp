@@ -763,6 +763,7 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 	}
 	schedule.insert(pair<unsigned int, set<ExecTask>>(0, srt));
 
+	/*
 	set<Memory> sync;
 	for(pair<unsigned int, set<ExecTask>> core_schedule: schedule)
 	{
@@ -783,6 +784,7 @@ generate(const pelib::Taskgraph &tg, const pelib::Platform &pt, const args_t arg
 		}
 	}
 	debug(sync.size());
+	*/
 
 	return Schedule("Manual", tg.getName(), schedule, links, tg, pt);
 }

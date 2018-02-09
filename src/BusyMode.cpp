@@ -17,29 +17,38 @@
  along with Pelib. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <sstream>
 
-#include <map>
+#include <pelib/PelibException.hpp>
+#include <pelib/BusyMode.hpp>
 
-#include <pelib/AllotedLink.hpp>
+#ifdef debug
+#undef debug
+#endif
 
-#ifndef PELIB_SCHEDULE_ALLOCATOR
-#define PELIB_SCHEDULE_ALLOCATOR
+#define debug(expr) cout << "[" << __FILE__ << ":" << __FUNCTION__ << ":" << __LINE__ << "] " << #expr << " = \"" << (expr) << "\"." << endl;
 
+using namespace std;
 
 namespace pelib
-{	
-	// Forward declaration
-	class Schedule;
-
-	/** Schedule of a streaming application **/
-	class ScheduleLinkAllocator
+{
+	BusyMode::BusyMode(float rate): rate(rate)
 	{
-		public:
-			virtual ~ScheduleLinkAllocator();
-			virtual Schedule allocate(const Schedule &schedule) const = 0;
-		protected:
-		private:
-	};
+		if(rate < 0 || rate > 1)
+		{
+			stringstream ss;
+			ss << "Transistor utilization rate (" << rate << ") is outside the valid range [0,1]";
+			throw PelibException(ss.str());
+		}
+		// do nothing else
+	}
+
+	float
+	BusyMode::getRate()
+	{
+		return this->rate;
+	}
 }
 
-#endif
+
+

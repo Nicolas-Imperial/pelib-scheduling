@@ -165,7 +165,26 @@ namespace pelib
 			{
 				const Task *producer = (*j)->getProducer();
 				const Task *consumer = (*j)->getConsumer();
+
+				set<Task>::const_iterator search_producer = this->tasks.find(*producer);
+				if(search_producer == this->tasks.end())
+				{
+					continue;
+				}
+				set<Task>::const_iterator search_consumer= this->tasks.find(*consumer);
+				if(search_consumer == this->tasks.end())
+				{
+					continue;
+				}
+				
 				AbstractLink newAbstractLink(*this->tasks.find(*producer), *this->tasks.find(*consumer), (*j)->getProducerName(), (*j)->getConsumerName(), (*j)->getDataType(), (*j)->getHeader(), (*j)->getIncludePath(), (*j)->getProducerRate(), (*j)->getConsumerRate());
+				set<AbstractLink>::const_iterator search_link = this->links.find(newAbstractLink);
+				if(search_link == this->links.end())
+				{
+					stringstream ss;
+					ss << "Attempted to add link to task, where link is not included in taskgraph.";
+					throw PelibException(ss.str());
+				}
 				const AbstractLink &link = *this->links.find(newAbstractLink);
 				t.getProducers().insert(&link);
 			}
@@ -175,7 +194,24 @@ namespace pelib
 			{
 				const Task *producer = (*j)->getProducer();
 				const Task *consumer = (*j)->getConsumer();
+				set<Task>::const_iterator search_producer = this->tasks.find(*producer);
+				if(search_producer == this->tasks.end())
+				{
+					continue;
+				}
+				set<Task>::const_iterator search_consumer= this->tasks.find(*consumer);
+				if(search_consumer == this->tasks.end())
+				{
+					continue;
+				}
 				AbstractLink newAbstractLink(*this->tasks.find(*producer), *this->tasks.find(*consumer), (*j)->getProducerName(), (*j)->getConsumerName(), (*j)->getDataType(), (*j)->getHeader(), (*j)->getIncludePath(), (*j)->getProducerRate(), (*j)->getConsumerRate());
+				set<AbstractLink>::const_iterator search_link = this->links.find(newAbstractLink);
+				if(search_link == this->links.end())
+				{
+					stringstream ss;
+					ss << "Attempted to add link to task, where link is not included in taskgraph.";
+					throw PelibException(ss.str());
+				}
 				const AbstractLink &link = *this->links.find(newAbstractLink);
 				t.getConsumers().insert(&link);
 			}

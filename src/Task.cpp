@@ -278,6 +278,11 @@ namespace pelib
 	bool
 	Task::operator<(const Task &other) const
 	{
+		// "Version"-like string comparison
+		// Strings are compared from left to wright until a difference is found
+		// If this difference involves a number in both strings, then the number is parsed
+		// and the string with the lowest number is "lower" than the one with the larger 
+		// number
 		string Me(this->getName());
 		string Ot(other.getName());
 		const char* me = Me.c_str();

@@ -17,26 +17,20 @@
  along with Pelib. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <pelib/Algebra.hpp>
+#include <pelib/Schedule.hpp>
+#include <pelib/PowerReport.hpp>
 
-#include <map>
-
-#include <pelib/AllotedLink.hpp>
-
-#ifndef PELIB_SCHEDULE_ALLOCATOR
-#define PELIB_SCHEDULE_ALLOCATOR
-
+#ifndef PELIB_POWER_EVALUATOR
+#define PELIB_POWER_EVALUATOR
 
 namespace pelib
-{	
-	// Forward declaration
-	class Schedule;
-
-	/** Schedule of a streaming application **/
-	class ScheduleLinkAllocator
+{
+	class PowerEvaluator
 	{
 		public:
-			virtual ~ScheduleLinkAllocator();
-			virtual Schedule allocate(const Schedule &schedule) const = 0;
+			virtual ~PowerEvaluator();
+			virtual PowerReport evaluate(const Schedule& sched) = 0;
 		protected:
 		private:
 	};

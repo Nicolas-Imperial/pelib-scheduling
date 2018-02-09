@@ -17,29 +17,33 @@
  along with Pelib. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include <map>
 
-#include <pelib/AllotedLink.hpp>
+#include <pelib/ExecutionMode.hpp>
+#include <pelib/Algebra.hpp>
 
-#ifndef PELIB_SCHEDULE_ALLOCATOR
-#define PELIB_SCHEDULE_ALLOCATOR
-
+#ifndef PELIB_POWER_REPORT
+#define PELIB_POWER_REPORT
 
 namespace pelib
-{	
-	// Forward declaration
-	class Schedule;
-
-	/** Schedule of a streaming application **/
-	class ScheduleLinkAllocator
+{
+	class PowerReport: public Record
 	{
 		public:
-			virtual ~ScheduleLinkAllocator();
-			virtual Schedule allocate(const Schedule &schedule) const = 0;
+			enum Power { oxide, subthreshold, dynamic}; // overall = oxide + subthreshold + dynamic, i.e., all sets are disjoint 
+			PowerReport(const std::map<const ExecutionMode*, std::map<Power, std::map<float, float> > >&);
+			PowerReport(float energy);
+			virtual ~PowerReport();
+
+			virtual PowerReport* clone() const;
+
+			Algebra buildAlgebra() const;
+			float overallEnergy() const;
 		protected:
 		private:
+			std::map<const ExecutionMode*, std::map<Power, std::map<float, float> > > curves; // For each mode, one curve for static power as a function of time, and another for dynamic power
 	};
 }
 
 #endif
+

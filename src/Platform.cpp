@@ -42,6 +42,29 @@ using namespace std;
 
 namespace pelib
 {
+#if 1
+	void
+	Platform::check() const
+	{
+		for(const Platform::island &isl: this->getSharedMemoryIslands())
+		{
+			for(const Core *ptr: isl)
+			{
+				/*
+				if(Core::freed.find(ptr) != Core::freed.end())
+				{
+					throw PelibException("Pointer to freed core");
+				}
+				*/
+				if(this->getCores().find(ptr) == this->getCores().end())
+				{
+					throw PelibException("Shared memory island made of cores outside platform");
+				}
+			}
+		}
+	}
+#endif
+
 	Platform::Platform()
 	{
 		set<unsigned int> f;
@@ -66,6 +89,7 @@ namespace pelib
 		dmcpdbs = 0;
 		dmccpbs = 0;
 		dmccdbs = 0;
+		this->check();
 	}
 
 	const Core::MemorySize&
@@ -174,6 +198,7 @@ namespace pelib
 		dmcpdbs = 0;
 		dmccpbs = 0;
 		dmccdbs = 0;
+		this->check();
 	}
 	
 	static
@@ -239,6 +264,7 @@ namespace pelib
 		this->dmcpdbs = dmcpdbs;
 		this->dmccpbs = dmccpbs;
 		this->dmccdbs = dmccdbs;
+		this->check();
 	}
 
 	Platform::Platform(size_t p, const Core* ref)
@@ -271,11 +297,13 @@ namespace pelib
 		dmcpdbs = 0;
 		dmccpbs = 0;
 		dmccdbs = 0;
+		this->check();
 	}
 
 	void
 	Platform::copy(const Platform *arch)
 	{
+		// Allocate new Color
 		this->syncSize = arch->getSyncSize();
 		this->pmcpbs = arch->getPrivMemChanProdBuffSize();
 		this->pmccbs = arch->getPrivMemChanConsBuffSize();
@@ -297,6 +325,7 @@ namespace pelib
 		this->voltage = buildIslands(this->cores, arch->getCores(), arch->getVoltageIslands());
 		this->freq = buildIslands(this->cores, arch->getCores(), arch->getFrequencyIslands());
 
+		arch->check();
 		for(const pair<pair<Platform::island, unsigned int>, Core::MemorySize> &i: arch->getSharedMemories())
 		{
 			Platform::island isl = buildIsland(this->cores, arch->getCores(), i.first.first);
@@ -397,16 +426,21 @@ namespace pelib
 		this->sharedMemorySize = arch->sharedMemorySize;
 		this->distributedMemorySize = arch->distributedMemorySize;
 #endif
-	}
 
+		// Now check if everything is alright
+		this->check();
+	}
+		
 	Platform::Platform(const Platform *arch)
 	{
 		copy(arch);
+		this->check();
 	}
 
 	Platform::Platform(const Platform &pt)
 	{
 		copy(&pt);
+		this->check();
 	}
 
 	static
@@ -914,6 +948,7 @@ namespace pelib
 		record.insert(&scalar_Sin);
 		Scalar<unsigned long int> scalar_sync("sync", this->getSyncSize());
 		record.insert(&scalar_sync);
+
 		Scalar<unsigned long int> scalar_pmcpbs("pmcpbs", this->getPrivMemChanProdBuffSize());
 		record.insert(&scalar_pmcpbs);
 		Scalar<unsigned long int> scalar_pmccbs("pmccbs", this->getPrivMemChanConsBuffSize());
@@ -1119,6 +1154,7 @@ namespace pelib
 		}
 
 		copy(&cpy);
+		this->check();
 		return *this;
 	}
 

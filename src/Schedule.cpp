@@ -91,9 +91,7 @@ namespace pelib
 			if(link == this->getTaskgraph().getLinks().end())
 			{
 				stringstream ss;
-				const AbstractLink &abl = i->getLink();
-				const Task *pt = abl.getProducer();
-				const Task *ct = abl.getConsumer();
+				//const AbstractLink &abl = i->getLink();
 				ss << "Schedule contains link from task \"" << i->getLink().getProducer()->getName() << "\" (\"" << i->getLink().getLink().getProducerName() << "\") to task \"" << i->getLink().getConsumer()->getName() << "\" (\"" << i->getLink().getConsumerName() << "\") but it does not exist in taskgraph";
 				throw PelibException(ss.str());
 			}
@@ -334,7 +332,6 @@ namespace pelib
 		const Vector<int, string> *task_name = algebra.find<Vector<int, string> >("name");
 
 		Taskgraph taskgraph = Taskgraph(algebra);
-		GraphML().dump(cout, taskgraph);
 		Platform platform = Platform(algebra);
 
 		Table schedule;
@@ -523,11 +520,11 @@ namespace pelib
 	Schedule&
 	Schedule::operator=(const Schedule &copy)
 	{
-		this->name = name;
-		this->appName = appName;
+		this->name = copy.getName();
+		this->appName = copy.getAppName();
 	
-		// Copy taskgraph	
-		this->setSchedule(schedule, copy.getLinks(), copy.getTaskgraph(), copy.getPlatform());
+		// Copy taskgraph
+		this->setSchedule(copy.getSchedule(), copy.getLinks(), copy.getTaskgraph(), copy.getPlatform());
 		return *this;
 	}
 
@@ -551,9 +548,10 @@ namespace pelib
 	void
 	Schedule::allocateLinks(const ScheduleLinkAllocator &alloc)
 	{
-		Schedule cpy = *this;
-		set<AllotedLink> links = alloc.allocate(cpy);
-		this->setSchedule(cpy.getSchedule(), links, cpy.getTaskgraph(), cpy.getPlatform());
+		//Schedule cpy = *this;
+		Schedule s = alloc.allocate(*this);
+		//this->setSchedule(cpy.getSchedule(), links, cpy.getTaskgraph(), cpy.getPlatform());
+		*this = s;
 	}
 
 	set<const Task*>

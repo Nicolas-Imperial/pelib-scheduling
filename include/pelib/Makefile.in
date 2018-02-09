@@ -38,6 +38,9 @@ XMLScheduleParser.hpp XMLScheduleOutput.hpp \
 XMLSchedule.hpp \
 TetrisSchedule.hpp \
 TetrisScheduleOutput.hpp \
+ExecutionMode.hpp BusyMode.hpp \
+PowerReport.hpp PowerEvaluator.hpp KimEtAlPowerModel.hpp \
+PowerReportOutput.hpp AmplPowerReportOutput.hpp \
 Scheduler.hpp \
 scheduler.h \
 generate.hpp pelib_exprtk.hpp 

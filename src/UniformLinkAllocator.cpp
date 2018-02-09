@@ -71,7 +71,7 @@ namespace pelib
 		return out;
 	}
 
-	std::set<AllotedLink>
+	Schedule
 	UniformLinkAllocator::allocate(const Schedule &schedule) const
 	{
 		const Platform &pt = schedule.getPlatform();
@@ -140,16 +140,65 @@ namespace pelib
 			distributed_level = search_size->second;
 		}
 
-		map<AbstractLink, float> multiplier;
+		// Allocate synchronization memory
+		// For task scheduled in every core
+		map<unsigned int, set<ExecTask>> table;
+		map<ExecTask, Memory> sync;
+		unsigned int sync_counter = 0;
+		for(const pair<unsigned int, set<ExecTask>> &i: schedule.getSchedule())
+		{
+			set<ExecTask> sequence;
+			for(const ExecTask &eTask: i.second)
+			{
+				// If the task runs on more than one core, and its master core is the one being covered now
+				if(eTask.getWidth() > 1)
+				{
+					// We need to allocate a synchronization barrier, but first
+					// we need to find the shared memory island
+					Platform::island task_cores = schedule.taskIsland(eTask.getTask());
+
+					for(const Platform::island &island: pt.getSharedMemoryIslands())
+					{
+						if(all_of(task_cores.begin(), task_cores.end(), [island](const Core* c){ return island.find(c) != island.end(); }))
+						{
+							// All cores involved in the task execution are included
+							// in this island therefore this island can host the barrier
+							shared_max_size.find(island)->second -= pt.getSyncSize();
+							unsigned int sync_id = 0;
+
+							if(sync.find(eTask) != sync.end())
+							{
+								sync_id = sync.find(eTask)->second.getInstance();
+							}
+							else
+							{
+								sync_id = sync_counter++;
+							}
+
+							Memory mem(Memory::Feature::shared, shared_level, i.first, sync_id);
+							sync.insert(pair<ExecTask, Memory>(eTask, mem));
+							sequence.insert(ExecTask(eTask.getTask(), eTask.allLinks(), eTask.getFrequency(), eTask.getWidth(), eTask.getStart(), eTask.getInstance(), eTask.getMasterCore(), mem));
+						}
+						else
+						{
+							sequence.insert(ExecTask(eTask));
+						}
+					}
+				}
+				else
+				{
+					sequence.insert(ExecTask(eTask));
+				}
+			}
+			table.insert(pair<unsigned int, set<ExecTask>>(i.first, sequence));
+		}
+
 		map<Platform::island, Core::MemorySize> private_mem_use, shared_mem_use;
 		Core::MemorySize distributed_mem_use = 0;
 		map<Platform::island, set<AbstractLink>> private_mem_alloc, shared_mem_alloc;
 		set<AbstractLink> distributed_mem_alloc;
 		for(const AbstractLink &ablink: tg.getLinks())
 		{
-			// Will be set to determine how much can each link be multiplied
-			multiplier.insert(pair<AbstractLink, float>(ablink, ablink.getTypeSize()));
-
 			Platform::island producer_island = schedule.taskIsland(*ablink.getProducer());
 			Platform::island consumer_island = schedule.taskIsland(*ablink.getConsumer());
 
@@ -211,8 +260,6 @@ namespace pelib
 				bool consumer_ok = all_of(consumer_island.begin(), consumer_island.end(), [tisl](const Core* c){ return tisl.find(c) != tisl.end(); });
 				if(producer_ok && consumer_ok)
 				{
-					// We need to account for parallel synchronization: subtract the size of a synchronization structure from shared memory
-					shared_max_size.find(tisl)->second -= pt.getSyncSize();
 					// We need also to account for the additional shared memory used to implement communication through shared memory
 					shared_max_size.find(tisl)->second -= pt.getSharedMemChanProdSharedBuffSize();
 					shared_max_size.find(tisl)->second -= pt.getSharedMemChanConsSharedBuffSize();
@@ -268,7 +315,21 @@ namespace pelib
 
 		// Not that we have the amount of memory alloted for each island, including communication barriers and additional memory overhead
 		// let us compute how much we can grow these buffers and still be able to accomodate all these in the memory they have been alloted to
-		float max_ratio = 1;
+		float min_ratio = distributed_max_size;
+		for(const pair<Platform::island, Core::MemorySize> &p: private_max_size)
+		{
+			if(p.second > min_ratio)
+			{
+				min_ratio = p.second;
+			}
+		}
+		for(const pair<Platform::island, Core::MemorySize> &p: shared_max_size)
+		{
+			if(p.second > min_ratio)
+			{
+				min_ratio = p.second;
+			}
+		}
 		// Let us scan private memory allocation
 		for(const pair<Platform::island, Core::MemorySize> &i: private_mem_use)
 		{
@@ -284,9 +345,9 @@ namespace pelib
 			}
 
 			// If the ratio is bigger than any already found, then update
-			if(max_ratio < ratio)
+			if(min_ratio > ratio)
 			{
-				max_ratio = ratio;
+				min_ratio = ratio;
 			}
 		}
 
@@ -296,8 +357,6 @@ namespace pelib
 			Core::MemorySize max = shared_max_size.find(i.first)->second;
 			Core::MemorySize use = i.second;
 
-			debug(max);
-			debug(use);
 			float ratio = (double)max / (double)use;
 			// If we have alloted more memory than available, then raise an exception
 			if(ratio < 1)
@@ -306,9 +365,9 @@ namespace pelib
 			}
 
 			// If the ratio is bigger than any already found, then update
-			if(max_ratio < ratio)
+			if(min_ratio > ratio)
 			{
-				max_ratio = ratio;
+				min_ratio = ratio;
 			}
 		}
 
@@ -319,9 +378,9 @@ namespace pelib
 		}
 
 		// If the ratio is bigger than any already found, then update
-		if(max_ratio < ratio)
+		if(min_ratio > ratio)
 		{
-			max_ratio = ratio;
+			min_ratio = ratio;
 		}
 
 		// Now we can magnify all allocations and insert links
@@ -333,7 +392,10 @@ namespace pelib
 			{
 				const ExecTask &eTask = schedule.getExecTask(*j.getConsumer());
 				Memory m(Memory::Feature::exclusive, private_level, eTask.getMasterCore(), 0);
-				Buffer b(j.getTypeSize() * max_ratio, j.getDataType(), j.getHeader(), m);
+				Buffer b(j.getTypeSize() * min_ratio / j.getTypeSize(), j.getDataType(), j.getHeader(), m);
+				// Create new link in private memory. Because we use a common
+				// private memory, no additional memory is required to manage
+				// data transactions from sender or receiver sides
 				AllotedLink al(j, b, Memory(), Memory());
 				pair<set<AllotedLink>::iterator, bool> res = links.insert(al);
 			}
@@ -346,13 +408,17 @@ namespace pelib
 			{
 				const ExecTask &eTask = schedule.getExecTask(*j.getConsumer());
 				Memory m(Memory::Feature::shared, shared_level, eTask.getMasterCore(), 0);
-				Buffer b(j.getTypeSize() * max_ratio, j.getDataType(), j.getHeader(), m);
+				Buffer b(j.getTypeSize() * min_ratio / j.getTypeSize(), j.getDataType(), j.getHeader(), m);
+				// Create new link in private memory. Because we use a shared
+				// memory, no additional memory is required to manage data
+				// transactions from sender or receiver sides
 				AllotedLink al(j, b, Memory(), Memory());
 				pair<set<AllotedLink>::iterator, bool> res = links.insert(al);
 			}
 		}
 
 		// TODO: allocate for distributed memory
-		return links;
+		Schedule out(schedule.getName(), schedule.getAppName(), table, links, tg, pt);
+		return out;
 	}
 }

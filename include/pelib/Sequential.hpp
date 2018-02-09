@@ -17,29 +17,32 @@
  along with Pelib. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include <map>
+#include <pelib/Scheduler.hpp>
 
-#include <pelib/AllotedLink.hpp>
-
-#ifndef PELIB_SCHEDULE_ALLOCATOR
-#define PELIB_SCHEDULE_ALLOCATOR
-
-
+#ifndef PELIB_SEQUENTIAL
+#define PELIB_SEQUENTIAL 1
 namespace pelib
-{	
-	// Forward declaration
-	class Schedule;
-
-	/** Schedule of a streaming application **/
-	class ScheduleLinkAllocator
+{
+	class Sequential : public Scheduler
 	{
 		public:
-			virtual ~ScheduleLinkAllocator();
-			virtual Schedule allocate(const Schedule &schedule) const = 0;
+			typedef struct
+			{
+				float frequency;
+				unsigned int position;
+			} RunTask;
+			virtual const Record* solve() const;
+			virtual const Record* solve(std::map<const std::string, double> &statistics) const;
+			virtual Schedule schedule(const Taskgraph &tg, const Platform &pt, std::map<const std::string, double> &statistics) const;
+			virtual Schedule schedule(const Taskgraph &tg, const Platform &pt, const map<ExecTask, set<RunTask>> &directives, std::map<const std::string, double> &statistics) const;
+			~Sequential();
+
+			virtual std::string getShortDescription() const;
 		protected:
 		private:
 	};
 }
 
 #endif
+
